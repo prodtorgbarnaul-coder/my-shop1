@@ -1503,9 +1503,9 @@
 
     <div class="edit-overlay" id="editOverlay"></div>
 
-    <!-- Панель редактирования товаров -->
-    <div class="edit-panel" id="productsPanel">
-        <div class="edit-panel-content" id="productsPanelContent">
+    <!-- Панель редактирования -->
+    <div class="edit-panel" id="editPanel">
+        <div class="edit-panel-content" id="editPanelContent">
             <!-- Контент будет загружен динамически -->
         </div>
         <div class="panel-actions">
@@ -2202,10 +2202,10 @@
             showNotification('Товар удален из корзины');
         }
 
-        // ==================== КОНСТРУКТОР САЙТА ====================
+        // ==================== ИСПРАВЛЕННЫЙ КОНСТРУКТОР ====================
         function toggleConstructor() {
             if (currentUser && currentUser.type === 'admin') {
-                const toolbar = document.querySelector('.constructor-toolbar');
+                const toolbar = document.getElementById('constructorToolbar');
                 const editButtons = document.getElementById('editButtons');
                 
                 if (toolbar.classList.contains('expanded')) {
@@ -2221,8 +2221,8 @@
         function editBackground() {
             if (currentUser && currentUser.type === 'admin') {
                 document.getElementById('editOverlay').style.display = 'block';
-                document.getElementById('productsPanel').style.display = 'block';
-                document.getElementById('productsPanelContent').innerHTML = `
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanelContent').innerHTML = `
                     <h3>🎨 Редактирование фона сайта</h3>
                     <div class="form-group">
                         <label>Тип фона:</label>
@@ -2338,8 +2338,8 @@
         function editHeader() {
             if (currentUser && currentUser.type === 'admin') {
                 document.getElementById('editOverlay').style.display = 'block';
-                document.getElementById('productsPanel').style.display = 'block';
-                document.getElementById('productsPanelContent').innerHTML = `
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanelContent').innerHTML = `
                     <h3>📝 Редактирование шапки</h3>
                     <div class="form-group">
                         <label>Текст логотипа:</label>
@@ -2390,8 +2390,8 @@
         function editCategories() {
             if (currentUser && currentUser.type === 'admin') {
                 document.getElementById('editOverlay').style.display = 'block';
-                document.getElementById('productsPanel').style.display = 'block';
-                document.getElementById('productsPanelContent').innerHTML = `
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanelContent').innerHTML = `
                     <h3>📂 Редактирование категорий</h3>
                     <div class="form-group">
                         <button class="btn btn-primary" onclick="showAddCategoryForm()" style="width: 100%;">
@@ -2438,7 +2438,7 @@
         }
 
         function showAddCategoryForm() {
-            document.getElementById('productsPanelContent').innerHTML = `
+            document.getElementById('editPanelContent').innerHTML = `
                 <h3>➕ Добавить категорию</h3>
                 <div class="form-group">
                     <label>Название категории:</label>
@@ -2493,9 +2493,28 @@
             `;
         }
 
+        function toggleCategoryBgOptions() {
+            const bgType = document.getElementById('newCategoryBgType').value;
+            document.getElementById('categoryGradientOptions').style.display = bgType === 'gradient' ? 'block' : 'none';
+            document.getElementById('categoryImageOptions').style.display = bgType === 'image' ? 'block' : 'none';
+        }
+
+        function handleCategoryImageUpload(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('categoryPreview');
+                preview.style.backgroundImage = `url('${e.target.result}')`;
+                preview.classList.add('has-image');
+                preview.innerHTML = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
         function editCategory(index) {
             const category = categoriesData[index];
-            document.getElementById('productsPanelContent').innerHTML = `
+            document.getElementById('editPanelContent').innerHTML = `
                 <h3>✏️ Редактирование категории</h3>
                 <div class="form-group">
                     <label>Название категории:</label>
@@ -2552,6 +2571,25 @@
                     <button class="btn btn-danger" onclick="editCategories()">Отмена</button>
                 </div>
             `;
+        }
+
+        function toggleEditCategoryBgOptions() {
+            const bgType = document.getElementById('editCategoryBgType').value;
+            document.getElementById('editCategoryGradientOptions').style.display = bgType === 'gradient' ? 'block' : 'none';
+            document.getElementById('editCategoryImageOptions').style.display = bgType === 'image' ? 'block' : 'none';
+        }
+
+        function handleEditCategoryImageUpload(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('editCategoryPreview');
+                preview.style.backgroundImage = `url('${e.target.result}')`;
+                preview.classList.add('has-image');
+                preview.innerHTML = '';
+            };
+            reader.readAsDataURL(file);
         }
 
         function saveNewCategory() {
@@ -2649,13 +2687,13 @@
         function editProducts() {
             if (currentUser && currentUser.type === 'admin') {
                 document.getElementById('editOverlay').style.display = 'block';
-                document.getElementById('productsPanel').style.display = 'block';
+                document.getElementById('editPanel').style.display = 'block';
                 loadProductsEditor();
             }
         }
 
         function loadProductsEditor() {
-            const panelContent = document.getElementById('productsPanelContent');
+            const panelContent = document.getElementById('editPanelContent');
             
             panelContent.innerHTML = `
                 <h3>🛍️ Управление товарами</h3>
@@ -2737,8 +2775,8 @@
 
         function showAddProductForm() {
             document.getElementById('editOverlay').style.display = 'block';
-            document.getElementById('productsPanel').style.display = 'block';
-            document.getElementById('productsPanelContent').innerHTML = `
+            document.getElementById('editPanel').style.display = 'block';
+            document.getElementById('editPanelContent').innerHTML = `
                 <h3>➕ Добавить новый товар</h3>
                 <div class="form-group">
                     <label>Название товара:</label>
@@ -2803,8 +2841,8 @@
         function editProduct(index) {
             const product = products[index];
             document.getElementById('editOverlay').style.display = 'block';
-            document.getElementById('productsPanel').style.display = 'block';
-            document.getElementById('productsPanelContent').innerHTML = `
+            document.getElementById('editPanel').style.display = 'block';
+            document.getElementById('editPanelContent').innerHTML = `
                 <h3>✏️ Редактирование товара</h3>
                 <div class="form-group">
                     <label>Название товара:</label>
@@ -2872,6 +2910,64 @@
                 loadProductsEditor();
                 showNotification('Товар удален');
             }
+        }
+
+        // ==================== ФУНКЦИИ ДЛЯ ПРОФИЛЯ И УВЕДОМЛЕНИЙ ====================
+        function openProfile() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            document.getElementById('profileModal').style.display = 'block';
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function openNotifications() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            showNotification('🔔 У вас нет новых уведомлений');
+        }
+
+        function showProductDetails(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            document.getElementById('productModalTitle').textContent = product.name;
+            document.getElementById('productModalContent').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <img src="${product.image}" alt="${product.name}" 
+                         style="width: 100%; border-radius: 10px;"
+                         onerror="this.src='https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения'">
+                    <div>
+                        <h4>${product.name}</h4>
+                        <p><strong>Категория:</strong> ${product.category}</p>
+                        <p><strong>Цена:</strong> ${product.price} ₽</p>
+                        <p><strong>Наличие:</strong> ${product.quantity} шт.</p>
+                        <p><strong>Статус:</strong> ${getProductStatusText(product.status)}</p>
+                    </div>
+                </div>
+                <div>
+                    <h4>Описание</h4>
+                    <p>${product.description}</p>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="addToCart(${product.id}); closeProductModal();" 
+                            ${product.status !== 'in_stock' ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-cart"></i> Добавить в корзину
+                    </button>
+                    <button class="btn btn-outline" onclick="closeProductModal()">Закрыть</button>
+                </div>
+            `;
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
         }
 
         // ==================== ИМПОРТ ИЗ EXCEL ====================
@@ -3094,7 +3190,7 @@
         }
 
         function showImportStats(imported, updated, errors) {
-            const panelContent = document.getElementById('productsPanelContent');
+            const panelContent = document.getElementById('editPanelContent');
             
             const statsHTML = `
                 <div class="import-info">
@@ -3127,21 +3223,35 @@
         }
 
         function closePanel() {
-            document.querySelectorAll('.edit-panel').forEach(panel => {
-                panel.style.display = 'none';
-            });
+            document.getElementById('editPanel').style.display = 'none';
             document.getElementById('editOverlay').style.display = 'none';
         }
 
         function editOrders() {
             if (currentUser && currentUser.type === 'admin') {
-                showNotification('📦 Управление заказами - функция в разработке');
+                document.getElementById('editOverlay').style.display = 'block';
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanelContent').innerHTML = `
+                    <h3>📦 Управление заказами</h3>
+                    <p>Функция находится в разработке</p>
+                    <div class="panel-actions">
+                        <button class="btn btn-danger" onclick="closePanel()">Закрыть</button>
+                    </div>
+                `;
             }
         }
 
         function editGiveaway() {
             if (currentUser && currentUser.type === 'admin') {
-                showNotification('🎁 Управление розыгрышем - функция в разработке');
+                document.getElementById('editOverlay').style.display = 'block';
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanelContent').innerHTML = `
+                    <h3>🎁 Управление розыгрышем</h3>
+                    <p>Функция находится в разработке</p>
+                    <div class="panel-actions">
+                        <button class="btn btn-danger" onclick="closePanel()">Закрыть</button>
+                    </div>
+                `;
             }
         }
 
