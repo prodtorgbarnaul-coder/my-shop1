@@ -1422,6 +1422,10 @@
                     <label>Ваше имя:</label>
                     <input type="text" class="form-control" id="clientName" placeholder="Введите ваше имя">
                 </div>
+                <div class="form-group">
+                    <label>Ваш телефон:</label>
+                    <input type="tel" class="form-control" id="clientPhone" placeholder="+7 (923) 753-36-06" value="+7 (923) 753-36-06">
+                </div>
                 <button class="btn btn-primary" onclick="loginAsClient()">
                     <i class="fas fa-shopping-cart"></i> Войти как клиент
                 </button>
@@ -1796,6 +1800,7 @@
 
         function loginAsClient() {
             const clientName = document.getElementById('clientName').value.trim();
+            const clientPhone = document.getElementById('clientPhone').value.trim();
             
             if (!clientName) {
                 showNotification('❌ Введите ваше имя');
@@ -1805,7 +1810,8 @@
             currentUser = {
                 type: 'client',
                 name: clientName,
-                avatar: clientName.charAt(0).toUpperCase()
+                avatar: clientName.charAt(0).toUpperCase(),
+                phone: clientPhone || '+7 (923) 753-36-06'
             };
             
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -1825,7 +1831,8 @@
             currentUser = {
                 type: 'admin',
                 name: 'Администратор',
-                avatar: 'А'
+                avatar: 'А',
+                phone: '+7 (923) 753-36-06'
             };
             
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -1914,7 +1921,10 @@
             });
             
             orderText += `\n💰 Итого: ${total} ₽`;
-            orderText += `\n\n📞 Контакты: +7 (923) 753-36-06`;
+            
+            // Используем телефон из данных пользователя
+            const userPhone = currentUser.phone || '+7 (923) 753-36-06';
+            orderText += `\n\n📞 Контакты: ${userPhone}`;
 
             const encodedText = encodeURIComponent(orderText);
             let shareUrl = '';
