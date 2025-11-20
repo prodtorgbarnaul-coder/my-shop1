@@ -1710,8 +1710,8 @@
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let filteredProducts = [];
         
-        // ПРАВИЛЬНЫЕ КАТЕГОРИИ ИЗ ВАШЕГО СПИСКА
-        let categoriesData = JSON.parse(localStorage.getItem('categoriesData')) || [
+        // ВСТРОЕННЫЕ ДАННЫЕ КАТЕГОРИЙ С ВАШИМИ ФОНАМИ
+        const defaultCategories = [
             { 
                 name: 'Бытовая химия', 
                 icon: '🧴', 
@@ -1777,6 +1777,17 @@
                 backgroundImage: ''
             }
         ];
+
+        // ИНИЦИАЛИЗАЦИЯ ДАННЫХ - ВАЖНОЕ ИЗМЕНЕНИЕ!
+        let categoriesData;
+        if (!localStorage.getItem('categoriesData')) {
+            // Первая загрузка - сохраняем встроенные данные
+            categoriesData = [...defaultCategories];
+            localStorage.setItem('categoriesData', JSON.stringify(categoriesData));
+        } else {
+            // Последующие загрузки - берем из LocalStorage
+            categoriesData = JSON.parse(localStorage.getItem('categoriesData'));
+        }
 
         let siteSettings = JSON.parse(localStorage.getItem('siteSettings')) || {
             backgroundType: 'gradient',
@@ -2868,7 +2879,7 @@
                 </div>
                 <div class="form-group">
                     <label>Количество:</label>
-                    <input type="number" class="form-control" id="editProductQuantity" value="${product.quantity}">
+                    <input type="number" class="formControl" id="editProductQuantity" value="${product.quantity}">
                 </div>
                 <div class="form-group">
                     <label>Описание:</label>
