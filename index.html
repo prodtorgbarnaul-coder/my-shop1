@@ -458,6 +458,8 @@
             text-align: center;
             cursor: pointer;
             transition: border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .file-upload:hover {
@@ -476,6 +478,20 @@
             border-radius: 8px;
             margin-top: 10px;
             display: none;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-top: 10px;
+            display: none;
+            border: 2px solid var(--border);
+        }
+
+        .image-preview.visible {
+            display: block;
         }
 
         .categories-list {
@@ -2805,19 +2821,44 @@
                 </div>
                 <div class="form-group">
                     <label>Категория:</label>
-                    <input type="text" class="form-control" id="newProductCategory" placeholder="Введите категорию">
+                    <select class="form-control" id="newProductCategory">
+                        <option value="">Выберите категорию</option>
+                        ${categoriesData.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Цена:</label>
                     <input type="number" class="form-control" id="newProductPrice" placeholder="Введите цену">
                 </div>
                 <div class="form-group">
+                    <label>Старая цена (если есть скидка):</label>
+                    <input type="number" class="form-control" id="newProductOldPrice" placeholder="Введите старую цену">
+                </div>
+                <div class="form-group">
                     <label>Количество:</label>
-                    <input type="number" class="form-control" id="newProductQuantity" placeholder="Введите количество">
+                    <input type="number" class="form-control" id="newProductQuantity" placeholder="Введите количество" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <select class="form-control" id="newProductStatus">
+                        <option value="in_stock">В наличии</option>
+                        <option value="out_of_stock">Нет в наличии</option>
+                        <option value="pre_order">Под заказ</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Описание:</label>
                     <textarea class="form-control" id="newProductDescription" placeholder="Введите описание" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Изображение товара:</label>
+                    <div class="file-upload" onclick="document.getElementById('newProductImageUpload').click()">
+                        <i class="fas fa-image"></i>
+                        <p>Нажмите для загрузки изображения товара</p>
+                        <input type="file" id="newProductImageUpload" accept="image/*" style="display: none;" 
+                               onchange="handleNewProductImageUpload(this.files[0])">
+                    </div>
+                    <img id="newProductImagePreview" class="image-preview" src="" alt="Предпросмотр">
                 </div>
                 <div class="panel-actions">
                     <button class="btn btn-success" onclick="saveNewProduct()">Сохранить товар</button>
@@ -2826,16 +2867,36 @@
             `;
         }
 
+        function handleNewProductImageUpload(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('newProductImagePreview');
+                preview.src = e.target.result;
+                preview.classList.add('visible');
+            };
+            reader.readAsDataURL(file);
+        }
+
         function saveNewProduct() {
             const name = document.getElementById('newProductName').value;
             const category = document.getElementById('newProductCategory').value;
             const price = parseInt(document.getElementById('newProductPrice').value);
+            const oldPrice = document.getElementById('newProductOldPrice').value ? parseInt(document.getElementById('newProductOldPrice').value) : null;
             const quantity = parseInt(document.getElementById('newProductQuantity').value);
+            const status = document.getElementById('newProductStatus').value;
             const description = document.getElementById('newProductDescription').value;
+            const imagePreview = document.getElementById('newProductImagePreview');
 
             if (!name || !category || !price) {
                 showNotification('❌ Заполните обязательные поля');
                 return;
+            }
+
+            let productImage = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+            if (imagePreview.src && imagePreview.src !== '') {
+                productImage = imagePreview.src;
             }
 
             const newProduct = {
@@ -2843,11 +2904,11 @@
                 name: name,
                 category: category,
                 price: price,
-                oldPrice: null,
+                oldPrice: oldPrice,
                 quantity: quantity || 0,
-                status: 'in_stock',
+                status: status,
                 description: description || 'Описание товара',
-                image: 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения'
+                image: productImage
             };
 
             products.push(newProduct);
@@ -2871,19 +2932,45 @@
                 </div>
                 <div class="form-group">
                     <label>Категория:</label>
-                    <input type="text" class="form-control" id="editProductCategory" value="${product.category}">
+                    <select class="form-control" id="editProductCategory">
+                        <option value="">Выберите категорию</option>
+                        ${categoriesData.map(cat => `<option value="${cat.name}" ${cat.name === product.category ? 'selected' : ''}>${cat.name}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Цена:</label>
                     <input type="number" class="form-control" id="editProductPrice" value="${product.price}">
                 </div>
                 <div class="form-group">
+                    <label>Старая цена (если есть скидка):</label>
+                    <input type="number" class="form-control" id="editProductOldPrice" value="${product.oldPrice || ''}" placeholder="Введите старую цену">
+                </div>
+                <div class="form-group">
                     <label>Количество:</label>
-                    <input type="number" class="formControl" id="editProductQuantity" value="${product.quantity}">
+                    <input type="number" class="form-control" id="editProductQuantity" value="${product.quantity}">
+                </div>
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <select class="form-control" id="editProductStatus">
+                        <option value="in_stock" ${product.status === 'in_stock' ? 'selected' : ''}>В наличии</option>
+                        <option value="out_of_stock" ${product.status === 'out_of_stock' ? 'selected' : ''}>Нет в наличии</option>
+                        <option value="pre_order" ${product.status === 'pre_order' ? 'selected' : ''}>Под заказ</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Описание:</label>
                     <textarea class="form-control" id="editProductDescription" rows="3">${product.description}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Изображение товара:</label>
+                    <div class="file-upload" onclick="document.getElementById('editProductImageUpload').click()">
+                        <i class="fas fa-image"></i>
+                        <p>Нажмите для загрузки нового изображения</p>
+                        <input type="file" id="editProductImageUpload" accept="image/*" style="display: none;" 
+                               onchange="handleEditProductImageUpload(this.files[0])">
+                    </div>
+                    <img id="editProductImagePreview" class="image-preview ${product.image ? 'visible' : ''}" 
+                         src="${product.image}" alt="Предпросмотр">
                 </div>
                 <div class="panel-actions">
                     <button class="btn btn-success" onclick="saveEditedProduct(${index})">Сохранить изменения</button>
@@ -2892,16 +2979,36 @@
             `;
         }
 
+        function handleEditProductImageUpload(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('editProductImagePreview');
+                preview.src = e.target.result;
+                preview.classList.add('visible');
+            };
+            reader.readAsDataURL(file);
+        }
+
         function saveEditedProduct(index) {
             const name = document.getElementById('editProductName').value;
             const category = document.getElementById('editProductCategory').value;
             const price = parseInt(document.getElementById('editProductPrice').value);
+            const oldPrice = document.getElementById('editProductOldPrice').value ? parseInt(document.getElementById('editProductOldPrice').value) : null;
             const quantity = parseInt(document.getElementById('editProductQuantity').value);
+            const status = document.getElementById('editProductStatus').value;
             const description = document.getElementById('editProductDescription').value;
+            const imagePreview = document.getElementById('editProductImagePreview');
 
             if (!name || !category || !price) {
                 showNotification('❌ Заполните обязательные поля');
                 return;
+            }
+
+            let productImage = products[index].image;
+            if (imagePreview.src && imagePreview.src !== '' && imagePreview.src !== products[index].image) {
+                productImage = imagePreview.src;
             }
 
             products[index] = {
@@ -2909,8 +3016,11 @@
                 name: name,
                 category: category,
                 price: price,
+                oldPrice: oldPrice,
                 quantity: quantity,
-                description: description
+                status: status,
+                description: description,
+                image: productImage
             };
 
             localStorage.setItem('products', JSON.stringify(products));
@@ -2958,16 +3068,22 @@
             const product = products.find(p => p.id === productId);
             if (!product) return;
 
+            const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
+
             document.getElementById('productModalTitle').textContent = product.name;
             document.getElementById('productModalContent').innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <img src="${product.image}" alt="${product.name}" 
-                         style="width: 100%; border-radius: 10px;"
+                         style="width: 100%; border-radius: 10px; object-fit: cover; height: 250px;"
                          onerror="this.src='https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения'">
                     <div>
                         <h4>${product.name}</h4>
                         <p><strong>Категория:</strong> ${product.category}</p>
-                        <p><strong>Цена:</strong> ${product.price} ₽</p>
+                        <div class="product-price" style="margin: 15px 0;">
+                            <span class="current-price">${product.price} ₽</span>
+                            ${product.oldPrice ? `<span class="old-price">${product.oldPrice} ₽</span>` : ''}
+                            ${discount > 0 ? `<span class="discount">-${discount}%</span>` : ''}
+                        </div>
                         <p><strong>Наличие:</strong> ${product.quantity} шт.</p>
                         <p><strong>Статус:</strong> ${getProductStatusText(product.status)}</p>
                     </div>
@@ -3367,8 +3483,10 @@
         window.saveEditedCategory = saveEditedCategory;
         window.deleteCategory = deleteCategory;
         window.showAddProductForm = showAddProductForm;
+        window.handleNewProductImageUpload = handleNewProductImageUpload;
         window.saveNewProduct = saveNewProduct;
         window.editProduct = editProduct;
+        window.handleEditProductImageUpload = handleEditProductImageUpload;
         window.saveEditedProduct = saveEditedProduct;
         window.deleteProduct = deleteProduct;
         window.editOrders = editOrders;
