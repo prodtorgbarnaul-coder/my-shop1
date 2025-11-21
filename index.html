@@ -1516,6 +1516,7 @@
             <button class="edit-btn" onclick="editProducts()">Товары</button>
             <button class="edit-btn" onclick="editOrders()">Заказы</button>
             <button class="edit-btn" onclick="editGiveaway()">Розыгрыш</button>
+            <button class="edit-btn" onclick="resetProblematicData()">Сбросить данные</button>
             <button class="edit-btn" onclick="saveDesign()">Сохранить</button>
             <button class="edit-btn" onclick="logout()">Выйти</button>
         </div>
@@ -1722,7 +1723,6 @@
         const ADMIN_PASSWORD = "admin123"; // Пароль администратора
         
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-        let products = JSON.parse(localStorage.getItem('products')) || [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let filteredProducts = [];
         
@@ -1794,23 +1794,53 @@
             }
         ];
 
-        // ИНИЦИАЛИЗАЦИЯ ДАННЫХ - ВАЖНОЕ ИЗМЕНЕНИЕ!
+        // ИСПРАВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ ДАННЫХ
         let categoriesData;
-        if (!localStorage.getItem('categoriesData')) {
-            // Первая загрузка - сохраняем встроенные данные
-            categoriesData = [...defaultCategories];
-            localStorage.setItem('categoriesData', JSON.stringify(categoriesData));
-        } else {
-            // Последующие загрузки - берем из LocalStorage
-            categoriesData = JSON.parse(localStorage.getItem('categoriesData'));
-        }
+        let products = [];
+        let siteSettings;
 
-        let siteSettings = JSON.parse(localStorage.getItem('siteSettings')) || {
-            backgroundType: 'gradient',
-            backgroundImage: '',
-            headerColor: '#2c5aa0',
-            logoText: 'ДЛЯ СВОИХ'
-        };
+        function initializeData() {
+            // Инициализация категорий
+            const storedCategories = localStorage.getItem('categoriesData');
+            if (!storedCategories) {
+                categoriesData = [...defaultCategories];
+                localStorage.setItem('categoriesData', JSON.stringify(categoriesData));
+            } else {
+                categoriesData = JSON.parse(storedCategories);
+            }
+
+            // Инициализация товаров
+            const storedProducts = localStorage.getItem('products');
+            if (!storedProducts) {
+                products = [];
+                localStorage.setItem('products', JSON.stringify(products));
+            } else {
+                products = JSON.parse(storedProducts);
+            }
+
+            // Инициализация настроек сайта
+            const storedSettings = localStorage.getItem('siteSettings');
+            if (!storedSettings) {
+                siteSettings = {
+                    backgroundType: 'gradient',
+                    backgroundImage: '',
+                    headerColor: '#2c5aa0',
+                    logoText: 'ДЛЯ СВОИХ'
+                };
+                localStorage.setItem('siteSettings', JSON.stringify(siteSettings));
+            } else {
+                siteSettings = JSON.parse(storedSettings);
+            }
+
+            // Инициализация корзины
+            const storedCart = localStorage.getItem('cart');
+            if (!storedCart) {
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+            } else {
+                cart = JSON.parse(storedCart);
+            }
+        }
 
         // ==================== ФУНКЦИИ АУТЕНТИФИКАЦИИ ====================
         function showLoginModal() {
@@ -2031,11 +2061,33 @@
         function loadProducts() {
             const productsGrid = document.getElementById('productsGrid');
             
+            // ОЧИСТКА filteredProducts и заполнение актуальными данными
+            filteredProducts = products.filter(product => {
+                // Фильтрация по категории
+                const categoryFilter = document.getElementById('categoryFilter').value;
+                if (categoryFilter && product.category !== categoryFilter) {
+                    return false;
+                }
+                
+                // Фильтрация по цене
+                const priceRange = document.getElementById('priceFilter').value;
+                if (priceRange) {
+                    const [min, max] = priceRange.split('-').map(Number);
+                    if (product.price < min || product.price > max) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+
             if (filteredProducts.length === 0) {
                 productsGrid.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                         <h3 style="color: var(--gray); margin-bottom: 20px;">Товары не найдены</h3>
-                        <p style="color: var(--gray);">Попробуйте изменить параметры фильтрации</p>
+                        <p style="color: var(--gray);">Попробуйте изменить параметры фильтрации или добавить товары</p>
+                        ${currentUser && currentUser.type === 'admin' ? 
+                            '<button class="btn btn-primary" onclick="editProducts()">Добавить товары</button>' : ''}
                     </div>
                 `;
                 return;
@@ -2045,10 +2097,10 @@
                 const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
                 const statusClass = `status-${product.status.replace('_', '-')}`;
                 
-                // Исправление для изображений товаров
-                let productImage = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
-                if (product.image && product.image.trim() !== '') {
-                    productImage = product.image;
+                // ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ИЗОБРАЖЕНИЙ
+                let productImage = product.image;
+                if (!productImage || productImage.trim() === '' || productImage === 'undefined') {
+                    productImage = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
                 }
                 
                 return `
@@ -3410,8 +3462,24 @@
             loadProducts();
         }
 
-        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        // ==================== ФУНКЦИЯ СБРОСА ДАННЫХ ====================
+        function resetProblematicData() {
+            if (confirm('Это сбросит все товары и настройки. Продолжить?')) {
+                localStorage.removeItem('products');
+                localStorage.removeItem('categoriesData');
+                localStorage.removeItem('siteSettings');
+                localStorage.removeItem('cart');
+                
+                // Перезагружаем страницу
+                location.reload();
+            }
+        }
+
+        // ==================== ИСПРАВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', function() {
+            // Инициализируем все данные
+            initializeData();
+            
             // Применяем сохраненные настройки
             if (siteSettings.backgroundType === 'gradient') {
                 document.body.style.background = `linear-gradient(135deg, ${siteSettings.color1}, ${siteSettings.color2})`;
@@ -3423,6 +3491,7 @@
 
             // Загружаем данные
             loadCategories();
+            filteredProducts = [...products]; // Важно: инициализируем filteredProducts
             loadProducts();
             updateCategoryFilter();
             updateCartCount();
@@ -3434,8 +3503,6 @@
                     showLoginModal();
                 }, 1000);
             }
-
-            // НЕ добавляем тестовые товары - оставляем только ваши 34 товара
         });
 
         // Глобальные функции
@@ -3492,6 +3559,7 @@
         window.editOrders = editOrders;
         window.editGiveaway = editGiveaway;
         window.saveDesign = saveDesign;
+        window.resetProblematicData = resetProblematicData;
     </script>
 </body>
 </html>
