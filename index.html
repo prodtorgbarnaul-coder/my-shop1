@@ -34,30 +34,32 @@
             scroll-behavior: smooth;
         }
 
-        /* ФИКС ДЕРГАНИЯ - УЛУЧШЕННАЯ ВЕРСИЯ */
+        /* ФИКС ДЕРГАНИЯ - СТАБИЛЬНАЯ ВЕРСИЯ */
         .product-card,
         .category-card {
             transform: translateZ(0);
             backface-visibility: hidden;
             perspective: 1000px;
-            will-change: transform;
         }
 
         .product-image {
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform;
         }
 
-        /* Упрощенные анимации */
+        /* Упрощенные анимации без дергания */
         .product-card {
             transition: 
-                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                transform 0.3s ease,
+                box-shadow 0.3s ease !important;
         }
 
         .product-image {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: transform 0.4s ease !important;
+        }
+
+        .category-card {
+            transition: all 0.4s ease !important;
         }
 
         /* Категории - фикс фонов */
@@ -2228,7 +2230,7 @@
                 const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
                 const statusClass = `status-${product.status.replace('_', '-')}`;
                 
-                // ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ИЗОБРАЖЕНИЙ - УБИРАЕМ data:image ПРЕОБРАЗОВАНИЕ
+                // ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ИЗОБРАЖЕНИЙ
                 let productImage = product.image;
                 
                 // Если изображение - это data URL (загруженное через конструктор), используем его как есть
@@ -3072,18 +3074,29 @@
             reader.readAsDataURL(file);
         }
 
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ТОВАРА
         function saveNewProduct() {
             const name = document.getElementById('newProductName').value;
             const category = document.getElementById('newProductCategory').value;
-            const price = parseInt(document.getElementById('newProductPrice').value);
-            const oldPrice = document.getElementById('newProductOldPrice').value ? parseInt(document.getElementById('newProductOldPrice').value) : null;
-            const quantity = parseInt(document.getElementById('newProductQuantity').value);
+            const priceInput = document.getElementById('newProductPrice').value;
+            const oldPriceInput = document.getElementById('newProductOldPrice').value;
+            const quantityInput = document.getElementById('newProductQuantity').value;
             const status = document.getElementById('newProductStatus').value;
             const description = document.getElementById('newProductDescription').value;
             const imagePreview = document.getElementById('newProductImagePreview');
 
-            if (!name || !category || !price) {
-                showNotification('❌ Заполните обязательные поля');
+            // ПРОВЕРКА ПОЛЕЙ - ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ
+            if (!name || !category || !priceInput) {
+                showNotification('❌ Заполните обязательные поля: название, категория, цена');
+                return;
+            }
+
+            const price = parseInt(priceInput);
+            const oldPrice = oldPriceInput ? parseInt(oldPriceInput) : null;
+            const quantity = quantityInput ? parseInt(quantityInput) : 0;
+
+            if (isNaN(price) || price <= 0) {
+                showNotification('❌ Цена должна быть положительным числом');
                 return;
             }
 
@@ -3098,7 +3111,7 @@
                 category: category,
                 price: price,
                 oldPrice: oldPrice,
-                quantity: quantity || 0,
+                quantity: quantity,
                 status: status,
                 description: description || 'Описание товара',
                 image: productImage
@@ -3184,18 +3197,29 @@
             reader.readAsDataURL(file);
         }
 
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ РЕДАКТИРОВАННОГО ТОВАРА
         function saveEditedProduct(index) {
             const name = document.getElementById('editProductName').value;
             const category = document.getElementById('editProductCategory').value;
-            const price = parseInt(document.getElementById('editProductPrice').value);
-            const oldPrice = document.getElementById('editProductOldPrice').value ? parseInt(document.getElementById('editProductOldPrice').value) : null;
-            const quantity = parseInt(document.getElementById('editProductQuantity').value);
+            const priceInput = document.getElementById('editProductPrice').value;
+            const oldPriceInput = document.getElementById('editProductOldPrice').value;
+            const quantityInput = document.getElementById('editProductQuantity').value;
             const status = document.getElementById('editProductStatus').value;
             const description = document.getElementById('editProductDescription').value;
             const imagePreview = document.getElementById('editProductImagePreview');
 
-            if (!name || !category || !price) {
-                showNotification('❌ Заполните обязательные поля');
+            // ПРОВЕРКА ПОЛЕЙ - ТОЛЬКО ОБЯЗАТЕЛЬНЫЕ
+            if (!name || !category || !priceInput) {
+                showNotification('❌ Заполните обязательные поля: название, категория, цена');
+                return;
+            }
+
+            const price = parseInt(priceInput);
+            const oldPrice = oldPriceInput ? parseInt(oldPriceInput) : null;
+            const quantity = quantityInput ? parseInt(quantityInput) : 0;
+
+            if (isNaN(price) || price <= 0) {
+                showNotification('❌ Цена должна быть положительным числом');
                 return;
             }
 
