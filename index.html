@@ -263,6 +263,20 @@
             display: none;
         }
 
+        .image-preview {
+            width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+            object-fit: cover;
+            border: 2px dashed var(--border);
+            display: none;
+        }
+
+        .image-preview.visible {
+            display: block;
+        }
+
         .categories-list {
             max-height: 400px;
             overflow-y: auto;
@@ -2011,6 +2025,35 @@
             showNotification(message);
         }
 
+        // ==================== ФУНКЦИИ ДЛЯ РАБОТЫ С ИЗОБРАЖЕНИЯМИ ====================
+        function handleProductImageUpload(file, previewId) {
+            if (!file) return '';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                preview.src = e.target.result;
+                preview.classList.add('visible');
+            };
+            reader.readAsDataURL(file);
+            return reader.result;
+        }
+
+        function handleProductImageUploadPromise(file) {
+            return new Promise((resolve) => {
+                if (!file) {
+                    resolve('');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    resolve(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         // ==================== РЕДАКТИРОВАНИЕ САЙТА ====================
         function editBackground() {
             // Проверка прав администратора
@@ -2959,6 +3002,16 @@
                     <label>Описание:</label>
                     <textarea class="form-control" id="newProductDescription" placeholder="Введите описание" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label>Изображение товара:</label>
+                    <div class="file-upload" onclick="document.getElementById('newProductImageUpload').click()">
+                        <i class="fas fa-image"></i>
+                        <p>Нажмите для загрузки изображения</p>
+                        <input type="file" id="newProductImageUpload" accept="image/*" style="display: none;" 
+                               onchange="handleProductImageUpload(this.files[0], 'newProductImagePreview')">
+                    </div>
+                    <img id="newProductImagePreview" class="image-preview" alt="Предпросмотр">
+                </div>
                 <div class="panel-actions">
                     <button class="btn btn-success" onclick="saveNewProduct()">Сохранить товар</button>
                     <button class="btn btn-danger" onclick="loadProductsEditor()">Отмена</button>
@@ -2966,16 +3019,24 @@
             `;
         }
 
-        function saveNewProduct() {
+        async function saveNewProduct() {
             const name = document.getElementById('newProductName').value;
             const category = document.getElementById('newProductCategory').value;
             const price = parseInt(document.getElementById('newProductPrice').value);
             const quantity = parseInt(document.getElementById('newProductQuantity').value);
             const description = document.getElementById('newProductDescription').value;
+            const imageFile = document.getElementById('newProductImageUpload').files[0];
 
             if (!name || !category || !price) {
                 showNotification('❌ Заполните обязательные поля');
                 return;
+            }
+
+            let imageUrl = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+            
+            // Если загружено изображение, конвертируем его в base64
+            if (imageFile) {
+                imageUrl = await handleProductImageUploadPromise(imageFile);
             }
 
             const newProduct = {
@@ -2987,7 +3048,7 @@
                 quantity: quantity || 0,
                 status: 'in_stock',
                 description: description || 'Описание товара',
-                image: 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения'
+                image: imageUrl
             };
 
             products.push(newProduct);
@@ -3025,6 +3086,20 @@
                     <label>Описание:</label>
                     <textarea class="form-control" id="editProductDescription" rows="3">${product.description}</textarea>
                 </div>
+                <div class="form-group">
+                    <label>Изображение товара:</label>
+                    <div class="file-upload" onclick="document.getElementById('editProductImageUpload').click()">
+                        <i class="fas fa-image"></i>
+                        <p>Нажмите для загрузки нового изображения</p>
+                        <input type="file" id="editProductImageUpload" accept="image/*" style="display: none;" 
+                               onchange="handleProductImageUpload(this.files[0], 'editProductImagePreview')">
+                    </div>
+                    <img id="editProductImagePreview" class="image-preview ${product.image && product.image !== 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения' ? 'visible' : ''}" 
+                         src="${product.image}" alt="Текущее изображение">
+                    <div style="margin-top: 10px;">
+                        <small style="color: var(--gray);">Текущее изображение товара</small>
+                    </div>
+                </div>
                 <div class="panel-actions">
                     <button class="btn btn-success" onclick="saveEditedProduct(${index})">Сохранить изменения</button>
                     <button class="btn btn-danger" onclick="loadProductsEditor()">Отмена</button>
@@ -3032,16 +3107,24 @@
             `;
         }
 
-        function saveEditedProduct(index) {
+        async function saveEditedProduct(index) {
             const name = document.getElementById('editProductName').value;
             const category = document.getElementById('editProductCategory').value;
             const price = parseInt(document.getElementById('editProductPrice').value);
             const quantity = parseInt(document.getElementById('editProductQuantity').value);
             const description = document.getElementById('editProductDescription').value;
+            const imageFile = document.getElementById('editProductImageUpload').files[0];
 
             if (!name || !category || !price) {
                 showNotification('❌ Заполните обязательные поля');
                 return;
+            }
+
+            let imageUrl = products[index].image;
+            
+            // Если загружено новое изображение, конвертируем его в base64
+            if (imageFile) {
+                imageUrl = await handleProductImageUploadPromise(imageFile);
             }
 
             products[index] = {
@@ -3050,7 +3133,8 @@
                 category: category,
                 price: price,
                 quantity: quantity,
-                description: description
+                description: description,
+                image: imageUrl
             };
 
             localStorage.setItem('products', JSON.stringify(products));
@@ -3250,6 +3334,8 @@
         window.createSharedCart = createSharedCart;
         window.copyShareLink = copyShareLink;
         window.leaveSharedCart = leaveSharedCart;
+        window.handleProductImageUpload = handleProductImageUpload;
+        window.handleProductImageUploadPromise = handleProductImageUploadPromise;
     </script>
 </body>
 </html>
