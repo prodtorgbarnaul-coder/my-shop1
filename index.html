@@ -1081,6 +1081,25 @@
             font-weight: bold;
         }
 
+        .shared-cart-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .share-link {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
         @media (max-width: 768px) {
             .header-main .container {
                 flex-direction: column;
@@ -1136,7 +1155,7 @@
             <button class="edit-btn" onclick="editOrders()">Заказы</button>
             <button class="edit-btn" onclick="editGiveaway()">Розыгрыш</button>
             <button class="edit-btn" onclick="saveDesign()">Сохранить</button>
-            <button class="edit-btn" onclick="logout()">Выйти</button>
+            <button class="edit-btn" onclick="logoutUser()">Выйти</button>
         </div>
     </div>
 
@@ -1159,15 +1178,79 @@
                 <h3 class="modal-title">🛒 Корзина</h3>
                 <span class="close" onclick="closeCart()">&times;</span>
             </div>
+            <div id="sharedCartInfo" class="shared-cart-info" style="display: none;">
+                <h4>🔄 Общая корзина</h4>
+                <p>Вы участвуете в общей корзине. Изменения видны всем участникам.</p>
+                <div class="share-link" id="shareLinkDisplay"></div>
+                <button class="btn btn-sm btn-outline" onclick="copyShareLink()">Копировать ссылку</button>
+                <button class="btn btn-sm btn-danger" onclick="leaveSharedCart()">Покинуть общую корзину</button>
+            </div>
             <div id="cartItems">
                 <!-- Товары в корзине -->
             </div>
             <div class="cart-total">
                 Итого: <span id="cartTotal">0</span> ₽
             </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" onclick="checkout()" style="flex: 1;">Оформить заказ</button>
+                <button class="btn btn-outline" onclick="createSharedCart()">Создать общую корзину</button>
                 <button class="btn btn-outline" onclick="closeCart()">Продолжить покупки</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно входа -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 Вход в аккаунт</h3>
+                <span class="close" onclick="closeLoginModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" class="form-control" id="loginEmail" placeholder="Ваш email">
+            </div>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" class="form-control" id="loginPassword" placeholder="Пароль">
+            </div>
+            <button class="btn btn-primary" onclick="performLogin()" style="width: 100%; margin-bottom: 15px;">
+                Войти
+            </button>
+            <div style="text-align: center;">
+                <a href="#" onclick="showRegisterModal()">Нет аккаунта? Зарегистрируйтесь</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно регистрации -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">👤 Регистрация</h3>
+                <span class="close" onclick="closeRegisterModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Имя:</label>
+                <input type="text" class="form-control" id="registerName" placeholder="Ваше имя">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" class="form-control" id="registerEmail" placeholder="Ваш email">
+            </div>
+            <div class="form-group">
+                <label>Телефон:</label>
+                <input type="tel" class="form-control" id="registerPhone" placeholder="+7 (XXX) XXX-XX-XX">
+            </div>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" class="form-control" id="registerPassword" placeholder="Пароль">
+            </div>
+            <button class="btn btn-success" onclick="performRegistration()" style="width: 100%; margin-bottom: 15px;">
+                Зарегистрироваться
+            </button>
+            <div style="text-align: center;">
+                <a href="#" onclick="showLoginModal()">Уже есть аккаунт? Войдите</a>
             </div>
         </div>
     </div>
@@ -1180,19 +1263,7 @@
                 <span class="close" onclick="closeProfile()">&times;</span>
             </div>
             <div id="profileContent">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 15px;">А</div>
-                    <h3>Администратор</h3>
-                    <p style="color: var(--gray);">Администратор магазина</p>
-                </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" class="form-control" value="admin@myshop.ru" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Телефон:</label>
-                    <input type="tel" class="form-control" value="+7 (923) 753-36-06" readonly>
-                </div>
+                <!-- Контент будет загружен динамически -->
             </div>
         </div>
     </div>
@@ -1246,14 +1317,7 @@
                         <div class="cart-count" id="cartCount">0</div>
                     </a>
                     <div class="user-info" id="userInfo">
-                        <div class="user-avatar">А</div>
-                        <div class="user-details">
-                            <div class="user-name">Администратор</div>
-                            <div class="user-role">Администратор</div>
-                        </div>
-                        <button class="logout-btn" onclick="logout()" title="Выйти">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
+                        <!-- Будет заполнено JavaScript -->
                     </div>
                 </div>
             </div>
@@ -1335,6 +1399,28 @@
     </footer>
 
     <script>
+        // ==================== СИСТЕМА ПОЛЬЗОВАТЕЛЕЙ ====================
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        let currentSharedCart = localStorage.getItem('currentSharedCart') || null;
+
+        // Создаем администратора по умолчанию если его нет
+        if (users.length === 0) {
+            const adminUser = {
+                id: 1,
+                email: 'admin@myshop.ru',
+                password: 'admin123', // В реальном проекте нужно хэшировать!
+                name: 'Администратор',
+                phone: '+7 (923) 753-36-06',
+                role: 'admin',
+                registrationDate: new Date().toISOString(),
+                orders: []
+            };
+            users.push(adminUser);
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
         // ==================== ОСНОВНЫЕ ДАННЫЕ ====================
         let products = JSON.parse(localStorage.getItem('products')) || [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -1372,6 +1458,289 @@
             headerColor: '#2c5aa0',
             logoText: 'ДЛЯ СВОИХ'
         };
+
+        let sharedCarts = JSON.parse(localStorage.getItem('sharedCarts')) || {};
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        let giveaways = JSON.parse(localStorage.getItem('giveaways')) || [];
+
+        // ==================== СИСТЕМА АВТОРИЗАЦИИ ====================
+        function registerUser(email, password, name, phone) {
+            const userExists = users.find(u => u.email === email);
+            if (userExists) {
+                showNotification('❌ Пользователь с таким email уже существует');
+                return false;
+            }
+            
+            const newUser = {
+                id: Date.now(),
+                email,
+                password, // В реальном проекте хэшировать!
+                name,
+                phone,
+                role: 'user',
+                registrationDate: new Date().toISOString(),
+                orders: []
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            return true;
+        }
+
+        function loginUser(email, password) {
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                isLoggedIn = true;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('isLoggedIn', 'true');
+                updateUIForUser();
+                showNotification(`✅ Добро пожаловать, ${user.name}!`);
+                return true;
+            }
+            return false;
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            isLoggedIn = false;
+            localStorage.removeItem('currentUser');
+            localStorage.setItem('isLoggedIn', 'false');
+            updateUIForUser();
+            showNotification('👋 До свидания!');
+        }
+
+        function updateUIForUser() {
+            const userInfo = document.getElementById('userInfo');
+            
+            if (isLoggedIn && currentUser) {
+                userInfo.innerHTML = `
+                    <div class="user-avatar">${currentUser.name.charAt(0)}</div>
+                    <div class="user-details">
+                        <div class="user-name">${currentUser.name}</div>
+                        <div class="user-role">${currentUser.role === 'admin' ? 'Администратор' : 'Покупатель'}</div>
+                    </div>
+                    <button class="logout-btn" onclick="logoutUser()" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                `;
+            } else {
+                userInfo.innerHTML = `
+                    <button class="btn btn-outline" onclick="showLoginModal()" style="padding: 8px 15px;">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </button>
+                `;
+            }
+        }
+
+        // ==================== ОБЩИЕ КОРЗИНЫ ====================
+        function createSharedCart() {
+            if (!isLoggedIn) {
+                showNotification('❌ Необходимо авторизоваться');
+                return;
+            }
+            
+            const shareId = 'cart_' + Date.now();
+            sharedCarts[shareId] = {
+                id: shareId,
+                owner: currentUser.id,
+                cart: [...cart],
+                created: new Date().toISOString(),
+                participants: [currentUser.id],
+                isActive: true
+            };
+            
+            localStorage.setItem('sharedCarts', JSON.stringify(sharedCarts));
+            currentSharedCart = shareId;
+            localStorage.setItem('currentSharedCart', shareId);
+            
+            const shareLink = `${window.location.origin}${window.location.pathname}?sharedCart=${shareId}`;
+            showNotification(`🔗 Общая корзина создана! Ссылка скопирована в буфер обмена`);
+            
+            // Копируем в буфер обмена
+            navigator.clipboard.writeText(shareLink).then(() => {
+                console.log('Ссылка скопирована');
+            });
+        }
+
+        function joinSharedCart(shareId) {
+            if (!isLoggedIn) {
+                showNotification('❌ Необходимо авторизоваться для присоединения к общей корзине');
+                showLoginModal();
+                return;
+            }
+            
+            const sharedCart = sharedCarts[shareId];
+            if (sharedCart && sharedCart.isActive) {
+                cart = [...sharedCart.cart];
+                if (!sharedCart.participants.includes(currentUser.id)) {
+                    sharedCart.participants.push(currentUser.id);
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                localStorage.setItem('sharedCarts', JSON.stringify(sharedCarts));
+                currentSharedCart = shareId;
+                localStorage.setItem('currentSharedCart', shareId);
+                updateCartCount();
+                showNotification('✅ Вы присоединились к общей корзине!');
+            }
+        }
+
+        function leaveSharedCart() {
+            if (currentSharedCart) {
+                const sharedCart = sharedCarts[currentSharedCart];
+                if (sharedCart) {
+                    const userIndex = sharedCart.participants.indexOf(currentUser.id);
+                    if (userIndex !== -1) {
+                        sharedCart.participants.splice(userIndex, 1);
+                    }
+                    
+                    // Если участников не осталось, удаляем корзину
+                    if (sharedCart.participants.length === 0) {
+                        delete sharedCarts[currentSharedCart];
+                    }
+                    
+                    localStorage.setItem('sharedCarts', JSON.stringify(sharedCarts));
+                }
+                
+                currentSharedCart = null;
+                localStorage.removeItem('currentSharedCart');
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
+                openCart();
+                showNotification('Вы покинули общую корзину');
+            }
+        }
+
+        function syncSharedCart() {
+            if (currentSharedCart && sharedCarts[currentSharedCart]) {
+                sharedCarts[currentSharedCart].cart = [...cart];
+                localStorage.setItem('sharedCarts', JSON.stringify(sharedCarts));
+            }
+        }
+
+        // ==================== МОДАЛЬНЫЕ ОКНА АВТОРИЗАЦИИ ====================
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function showRegisterModal() {
+            closeLoginModal();
+            document.getElementById('registerModal').style.display = 'block';
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').style.display = 'none';
+        }
+
+        function performLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showNotification('❌ Заполните все поля');
+                return;
+            }
+            
+            if (loginUser(email, password)) {
+                closeLoginModal();
+                
+                // Проверяем, есть ли параметр общей корзины в URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const sharedCartId = urlParams.get('sharedCart');
+                if (sharedCartId) {
+                    joinSharedCart(sharedCartId);
+                    // Убираем параметр из URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } else {
+                showNotification('❌ Неверный email или пароль');
+            }
+        }
+
+        function performRegistration() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const phone = document.getElementById('registerPhone').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            if (!name || !email || !phone || !password) {
+                showNotification('❌ Заполните все поля');
+                return;
+            }
+            
+            if (registerUser(email, password, name, phone)) {
+                showNotification('✅ Регистрация успешна! Теперь войдите в систему');
+                closeRegisterModal();
+                showLoginModal();
+                // Заполняем email в форме входа
+                document.getElementById('loginEmail').value = email;
+            }
+        }
+
+        // ==================== СИСТЕМА ЗАКАЗОВ ====================
+        function checkout() {
+            if (cart.length === 0) {
+                showNotification('❌ Корзина пуста');
+                return;
+            }
+            
+            if (!isLoggedIn) {
+                showNotification('❌ Для оформления заказа необходимо авторизоваться');
+                showLoginModal();
+                return;
+            }
+            
+            const order = {
+                id: 'ORD_' + Date.now(),
+                userId: currentUser.id,
+                items: [...cart],
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                contactInfo: {
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    phone: currentUser.phone
+                }
+            };
+            
+            orders.push(order);
+            currentUser.orders.push(order.id);
+            
+            // Обновляем количество товаров
+            order.items.forEach(item => {
+                const product = products.find(p => p.id === item.id);
+                if (product) {
+                    product.quantity -= item.quantity;
+                    if (product.quantity <= 0) {
+                        product.status = 'out_of_stock';
+                        product.quantity = 0;
+                    }
+                }
+            });
+            
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('products', JSON.stringify(products));
+            
+            // Очищаем корзину
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            
+            // Выходим из общей корзины если были в ней
+            if (currentSharedCart) {
+                leaveSharedCart();
+            }
+            
+            showNotification(`✅ Заказ #${order.id} оформлен! Сумма: ${order.total.toLocaleString()} ₽`);
+            closeCart();
+        }
 
         // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ФИЛЬТРА ====================
         function updateCategoryFilter() {
@@ -1644,6 +2013,12 @@
 
         // ==================== РЕДАКТИРОВАНИЕ САЙТА ====================
         function editBackground() {
+            // Проверка прав администратора
+            if (!isLoggedIn || currentUser.role !== 'admin') {
+                showNotification('❌ Доступно только для администратора');
+                return;
+            }
+            
             document.getElementById('editOverlay').style.display = 'block';
             document.getElementById('productsPanel').style.display = 'block';
             document.getElementById('productsPanelContent').innerHTML = `
@@ -1742,6 +2117,12 @@
         }
 
         function editHeader() {
+            // Проверка прав администратора
+            if (!isLoggedIn || currentUser.role !== 'admin') {
+                showNotification('❌ Доступно только для администратора');
+                return;
+            }
+            
             document.getElementById('editOverlay').style.display = 'block';
             document.getElementById('productsPanel').style.display = 'block';
             document.getElementById('productsPanelContent').innerHTML = `
@@ -1797,6 +2178,12 @@
         }
 
         function editCategories() {
+            // Проверка прав администратора
+            if (!isLoggedIn || currentUser.role !== 'admin') {
+                showNotification('❌ Доступно только для администратора');
+                return;
+            }
+            
             document.getElementById('editOverlay').style.display = 'block';
             document.getElementById('productsPanel').style.display = 'block';
             document.getElementById('productsPanelContent').innerHTML = `
@@ -2212,6 +2599,12 @@
             
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
+            
+            // Синхронизируем общую корзину если участвуем в ней
+            if (currentSharedCart) {
+                syncSharedCart();
+            }
+            
             showNotification('✅ Товар добавлен в корзину!');
         }
 
@@ -2235,6 +2628,16 @@
             const modal = document.getElementById('cartModal');
             const cartItems = document.getElementById('cartItems');
             const cartTotal = document.getElementById('cartTotal');
+            const sharedCartInfo = document.getElementById('sharedCartInfo');
+            
+            // Показываем информацию об общей корзине если участвуем в ней
+            if (currentSharedCart) {
+                sharedCartInfo.style.display = 'block';
+                const shareLink = `${window.location.origin}${window.location.pathname}?sharedCart=${currentSharedCart}`;
+                document.getElementById('shareLinkDisplay').textContent = shareLink;
+            } else {
+                sharedCartInfo.style.display = 'none';
+            }
             
             if (cart.length === 0) {
                 cartItems.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 40px;">Корзина пуста</p>';
@@ -2273,12 +2676,24 @@
         function changeQuantity(cartId, change) {
             const item = cart.find(item => item.cartId === cartId);
             if (item) {
+                const product = products.find(p => p.id === item.id);
+                if (product && change > 0 && item.quantity >= product.quantity) {
+                    showNotification('❌ Достигнуто максимальное количество товара');
+                    return;
+                }
+                
                 item.quantity += change;
                 if (item.quantity <= 0) {
                     removeFromCart(cartId);
                 } else {
                     localStorage.setItem('cart', JSON.stringify(cart));
                     updateCartCount();
+                    
+                    // Синхронизируем общую корзину если участвуем в ней
+                    if (currentSharedCart) {
+                        syncSharedCart();
+                    }
+                    
                     openCart();
                 }
             }
@@ -2288,26 +2703,57 @@
             cart = cart.filter(item => item.cartId !== cartId);
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
+            
+            // Синхронизируем общую корзину если участвуем в ней
+            if (currentSharedCart) {
+                syncSharedCart();
+            }
+            
             openCart();
             showNotification('Товар удален из корзины');
         }
 
-        function checkout() {
-            if (cart.length === 0) {
-                showNotification('Корзина пуста');
-                return;
-            }
-            
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            showNotification(`✅ Заказ оформлен! Сумма: ${total.toLocaleString()} ₽`);
-            cart = [];
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-            closeCart();
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLinkDisplay').textContent;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                showNotification('🔗 Ссылка скопирована в буфер обмена');
+            });
         }
 
         function openProfile() {
-            document.getElementById('profileModal').style.display = 'block';
+            if (!isLoggedIn) {
+                showLoginModal();
+                return;
+            }
+            
+            const modal = document.getElementById('profileModal');
+            const profileContent = document.getElementById('profileContent');
+            
+            profileContent.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 15px;">${currentUser.name.charAt(0)}</div>
+                    <h3>${currentUser.name}</h3>
+                    <p style="color: var(--gray);">${currentUser.role === 'admin' ? 'Администратор магазина' : 'Покупатель'}</p>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" class="form-control" value="${currentUser.email}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <input type="tel" class="form-control" value="${currentUser.phone}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Дата регистрации:</label>
+                    <input type="text" class="form-control" value="${new Date(currentUser.registrationDate).toLocaleDateString()}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Количество заказов:</label>
+                    <input type="text" class="form-control" value="${currentUser.orders.length}" readonly>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
         }
 
         function closeProfile() {
@@ -2377,6 +2823,12 @@
 
         // ==================== КОНСТРУКТОР ====================
         function toggleConstructor() {
+            // Проверка прав администратора
+            if (!isLoggedIn || currentUser.role !== 'admin') {
+                showNotification('❌ Доступно только для администратора');
+                return;
+            }
+            
             const toolbar = document.querySelector('.constructor-toolbar');
             const editButtons = document.getElementById('editButtons');
             
@@ -2390,6 +2842,12 @@
         }
 
         function editProducts() {
+            // Проверка прав администратора
+            if (!isLoggedIn || currentUser.role !== 'admin') {
+                showNotification('❌ Доступно только для администратора');
+                return;
+            }
+            
             document.getElementById('editOverlay').style.display = 'block';
             document.getElementById('productsPanel').style.display = 'block';
             loadProductsEditor();
@@ -2634,12 +3092,6 @@
             showNotification('💾 Все изменения сохранены!');
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('isLoggedIn');
-            showNotification('👋 До свидания!');
-        }
-
         function sortProducts() {
             const sortBy = document.getElementById('sortBy').value;
             if (sortBy === 'price_asc') {
@@ -2668,6 +3120,21 @@
             loadProducts();
             updateCategoryFilter();
             updateCartCount();
+            updateUIForUser();
+
+            // Проверяем параметр общей корзины в URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedCartId = urlParams.get('sharedCart');
+            if (sharedCartId) {
+                if (isLoggedIn) {
+                    joinSharedCart(sharedCartId);
+                } else {
+                    showNotification('🔗 Для присоединения к общей корзине необходимо авторизоваться');
+                    showLoginModal();
+                }
+                // Убираем параметр из URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
 
             // Добавляем тестовые товары если их нет
             if (products.length === 0) {
@@ -2773,7 +3240,16 @@
         window.editOrders = editOrders;
         window.editGiveaway = editGiveaway;
         window.saveDesign = saveDesign;
-        window.logout = logout;
+        window.logoutUser = logoutUser;
+        window.showLoginModal = showLoginModal;
+        window.closeLoginModal = closeLoginModal;
+        window.showRegisterModal = showRegisterModal;
+        window.closeRegisterModal = closeRegisterModal;
+        window.performLogin = performLogin;
+        window.performRegistration = performRegistration;
+        window.createSharedCart = createSharedCart;
+        window.copyShareLink = copyShareLink;
+        window.leaveSharedCart = leaveSharedCart;
     </script>
 </body>
 </html>
