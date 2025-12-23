@@ -2355,92 +2355,193 @@
         }
 
         // ==================== ИМПОРТ ИЗ WHATSAPP ====================
-        function importFromWhatsApp(file) {
-            if (!file) return;
+function importFromWhatsApp(file) {
+    if (!file) return;
 
-            const reader = new FileReader();
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const content = e.target.result;
+            const lines = content.split('\n').filter(line => line.trim() !== '');
             
-            reader.onload = function(e) {
+            let importedCount = 0;
+            let errorCount = 0;
+            
+            lines.forEach((line, index) => {
                 try {
-                    const content = e.target.result;
-                    const lines = content.split('\n').filter(line => line.trim() !== '');
+                    const priceMatch = line.match(/(\d+)[\s]*₽|руб|рублей|р\./i);
+                    let productName = line;
+                    let price = 0;
                     
-                    let importedCount = 0;
-                    let errorCount = 0;
+                    if (priceMatch) {
+                        price = parseInt(priceMatch[1]);
+                        productName = line.replace(priceMatch[0], '').trim();
+                    }
                     
-                    lines.forEach((line, index) => {
-                        try {
-                            const priceMatch = line.match(/(\d+)[\s]*₽|руб|рублей|р\./i);
-                            let productName = line;
-                            let price = 0;
-                            
-                            if (priceMatch) {
-                                price = parseInt(priceMatch[1]);
-                                productName = line.replace(priceMatch[0], '').trim();
-                            }
-                            
-                            productName = productName.replace(/[^\w\sа-яА-ЯёЁ\-]/gi, ' ').trim();
-                            
-                            if (!productName || productName.length < 2) {
-                                errorCount++;
-                                return;
-                            }
-                            
-                            let category = 'Разное';
-                            const categoryKeywords = {
-                                'Бытовая химия': ['fairy', 'мило', 'шампунь', 'гель', 'мыло', 'чистящ', 'порошок', 'кондиционер'],
-                                'Постельное белье': ['постель', 'белье', 'комплект', 'наволочка', 'простыня', 'пододеяльник'],
-                                'Рыба и морепродукты': ['рыба', 'лосось', 'креветки', 'икра', 'морепродукт', 'кальмар'],
-                                'Мясо и птица': ['мясо', 'курица', 'говядина', 'свинина', 'птица', 'грудка', 'окорочка'],
-                                'Кондитерские изделия': ['торт', 'пирожное', 'печенье', 'шоколад', 'конфеты', 'сладости'],
-                                'Молочные продукты': ['молоко', 'сыр', 'творог', 'йогурт', 'кефир', 'сметана', 'масло'],
-                                'Мангальные зоны и мангалы': ['мангал', 'гриль', 'уголь', 'шампур', 'решетка', 'барбекю']
-                            };
-                            
-                            for (const [cat, keywords] of Object.entries(categoryKeywords)) {
-                                if (keywords.some(keyword => productName.toLowerCase().includes(keyword))) {
-                                    category = cat;
-                                    break;
-                                }
-                            }
-                            
-                            const newProduct = {
-                                id: Date.now() + index,
-                                name: productName,
-                                category: category,
-                                price: price || 100,
-                                oldPrice: null,
-                                quantity: 1,
-                                status: 'in_stock',
-                                description: `Товар импортирован из WhatsApp: ${productName}`,
-                                image: 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=WhatsApp'
-                            };
-                            
-                            products.push(newProduct);
-                            importedCount++;
-                            
-                        } catch (error) {
-                            errorCount++;
+                    productName = productName.replace(/[^\w\sа-яА-ЯёЁ\-]/gi, ' ').trim();
+                    
+                    if (!productName || productName.length < 2) {
+                        errorCount++;
+                        return;
+                    }
+                    
+                    let category = 'Разное';
+                    const categoryKeywords = {
+                        'Бытовая химия': ['fairy', 'мило', 'шампунь', 'гель', 'мыло', 'чистящ', 'порошок', 'кондиционер'],
+                        'Постельное белье': ['постель', 'белье', 'комплект', 'наволочка', 'простыня', 'пододеяльник'],
+                        'Рыба и морепродукты': ['рыба', 'лосось', 'креветки', 'икра', 'морепродукт', 'кальмар'],
+                        'Мясо и птица': ['мясо', 'курица', 'говядина', 'свинина', 'птица', 'грудка', 'окорочка'],
+                        'Кондитерские изделия': ['торт', 'пирожное', 'печенье', 'шоколад', 'конфеты', 'сладости'],
+                        'Молочные продукты': ['молоко', 'сыр', 'творог', 'йогурт', 'кефир', 'сметана', 'масло'],
+                        'Мангальные зоны и мангалы': ['мангал', 'гриль', 'уголь', 'шампур', 'решетка', 'барбекю']
+                    };
+                    
+                    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+                        if (keywords.some(keyword => productName.toLowerCase().includes(keyword))) {
+                            category = cat;
+                            break;
                         }
-                    });
+                    }
                     
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
+                    const newProduct = {
+                        id: Date.now() + index,
+                        name: productName,
+                        category: category,
+                        price: price || 100,
+                        oldPrice: null,
+                        quantity: 1,
+                        status: 'in_stock',
+                        description: `Товар импортирован из WhatsApp: ${productName}`,
+                        image: 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=WhatsApp'
+                    };
                     
-                    showImportStats(importedCount, 0, errorCount, 'WhatsApp');
+                    products.push(newProduct);
+                    importedCount++;
                     
                 } catch (error) {
-                    showNotification('❌ Ошибка при импорте из WhatsApp');
+                    errorCount++;
                 }
-            };
+            });
             
-            reader.readAsText(file, 'UTF-8');
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            loadProducts();
+            updateCategoryFilter();
+            
+            showImportStats(importedCount, 0, errorCount, 'WhatsApp');
+            
+        } catch (error) {
+            showNotification('❌ Ошибка при импорте из WhatsApp');
         }
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+}
 
-        // ==================== ИМПОРТ ИЗ EXCEL/CSV ====================
-        function importCSV(file) {
+// ==================== ИМПОРТ ИЗ EXCEL/CSV ====================
+function importExcel(file) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) {
+                showNotification('❌ Файл не содержит данных');
+                return;
+            }
+            
+            let importedCount = 0;
+            let updatedCount = 0;
+            let errorCount = 0;
+            
+            jsonData.forEach((row, index) => {
+                try {
+                    const headers = Object.keys(row);
+                    const headerMapping = {
+                        'код_товара': 'id',
+                        'категория': 'category',
+                        'название': 'name',
+                        'бренд': 'brand', 
+                        'описание': 'description',
+                        'цена_закупки': 'purchase_price',
+                        'цена_продажи': 'sale_price',
+                        'цена': 'price',
+                        'количество': 'quantity',
+                        'статус': 'status',
+                        'ссылка_изображение': 'image_url',
+                        'изображение': 'image'
+                    };
+                    
+                    const productData = {};
+                    headers.forEach(header => {
+                        const cleanHeader = header.trim().toLowerCase();
+                        const mappedHeader = headerMapping[cleanHeader] || cleanHeader;
+                        productData[mappedHeader] = row[header];
+                    });
+                    
+                    if (!productData.name || !productData.category) {
+                        errorCount++;
+                        return;
+                    }
+                    
+                    let productId;
+                    if (productData.id && productData.id.toString().startsWith('PROD-')) {
+                        productId = parseInt(productData.id.toString().replace('PROD-', '')) || Date.now() + index;
+                    } else {
+                        productId = Date.now() + index;
+                    }
+                    
+                    const price = productData.price || productData.sale_price || 0;
+                    const quantity = productData.quantity || 0;
+                    
+                    const newProduct = {
+                        id: productId,
+                        name: productData.name.toString(),
+                        category: productData.category.toString(),
+                        price: parseInt(price) || 0,
+                        oldPrice: null,
+                        quantity: parseInt(quantity) || 0,
+                        status: (productData.status || 'in_stock').toString().toLowerCase(),
+                        description: (productData.description || 'Описание товара').toString(),
+                        image: (productData.image_url || productData.image || 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения').toString()
+                    };
+                    
+                    const existingIndex = products.findIndex(p => p.id === newProduct.id);
+                    if (existingIndex !== -1) {
+                        products[existingIndex] = newProduct;
+                        updatedCount++;
+                    } else {
+                        products.push(newProduct);
+                        importedCount++;
+                    }
+                    
+                } catch (error) {
+                    errorCount++;
+                }
+            });
+            
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            loadProducts();
+            updateCategoryFilter();
+            showImportStats(importedCount, updatedCount, errorCount);
+            
+        } catch (error) {
+            showNotification('❌ Ошибка при импорте файла');
+        }
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+function importCSV(file) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
@@ -2608,6 +2709,53 @@
     reader.readAsText(file, 'UTF-8');
 }
 
+function importProducts(file) {
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (fileExtension === 'csv') {
+        importCSV(file);
+    } else if (fileExtension === 'xlsx') {
+        importExcel(file);
+    } else {
+        showNotification('❌ Поддерживаются только CSV и XLSX файлы');
+    }
+}
+
+function showImportStats(imported, updated, errors, source = 'файла') {
+    const panelContent = document.getElementById('productsPanelContent');
+    
+    const statsHTML = `
+        <div class="import-info">
+            <h4>📊 Результаты импорта из ${source}</h4>
+            <p>Импорт товаров завершен успешно!</p>
+            <div class="import-stats">
+                <div class="stat-item">
+                    <div class="stat-value stat-added">${imported}</div>
+                    <div>Добавлено</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value stat-updated">${updated}</div>
+                    <div>Обновлено</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value stat-errors">${errors}</div>
+                    <div>Ошибок</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    panelContent.innerHTML = statsHTML + panelContent.innerHTML;
+    
+    let message = `✅ Импорт из ${source} завершен! Добавлено: ${imported}`;
+    if (updated > 0) message += `, Обновлено: ${updated}`;
+    if (errors > 0) message += `, Ошибок: ${errors}`;
+    
+    showNotification(message);
+}
+
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function showNotification(message) {
             const notification = document.createElement('div');
@@ -2750,4 +2898,5 @@
     </script>
 </body>
 </html>
+
 
