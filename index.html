@@ -2552,43 +2552,277 @@ function importCSV(file) {
                 csvData = csvData.substring(1);
             }
             
+            // Определяем разделитель
+            let delimiter = ';';
+            
+            // Проверяем, какой разделитель чаще встречается в первой строке
+            const firstLine = csvData.split('\n')[0];
+            const semicolonCount = (firstLine.match(/;/g) || []).length;
+            const commaCount = (firstLine.match(/,/g) || []).length;
+            const tabCount = (firstLine.match(/\t/g) || []).length;
+            
+            // Выбираем самый частый разделитель
+            if (commaCount > semicolonCount && commaCount > tabCount) {
+                delimiter = ',';
+            } else if (tabCount > semicolonCount && tabCount > commaCount) {
+                delimiter = '\t';
+            }
+            
+            console.log('Определен разделитель:', delimiter === ';' ? 'точка с запятой' : 
+                                               delimiter === ',' ? 'запятая' : 'табуляция');
+            
             const lines = csvData.split('\n').filter(line => line.trim() !== '');
             if (lines.length === 0) {
                 showNotification('❌ Файл пуст');
                 return;
             }
             
-            const headers = lines[0].split(';').map(h => h.trim());
+            const headers = lines[0].split(delimiter).map(h => h.trim());
+            console.log('Заголовки:', headers);
             
             let importedCount = 0;
             let updatedCount = 0;
             let errorCount = 0;
+            let firstErrorRow = null;
             
             // Пропускаем заголовок (первую строку)
             for (let i = 1; i < lines.length; i++) {
                 try {
-                    // Разделяем по точке с запятой с учетом кавычек
-                    const values = [];
-                    let currentValue = '';
-                    let inQuotes = false;
-                    
-                    for (let char of lines[i]) {
-                        if (char === '"') {
-                            inQuotes = !inQuotes;
-                        } else if (char === ';' && !inQuotes) {
-                            values.push(currentValue.trim());
-                            currentValue = '';
-                        } else {
-                            currentValue += char;
-                        }
+                    const line = lines[i];
+                    // Пропускаем пустые строки
+                    if (line.trim() === '') {
+                        continue;
                     }
-                    // Добавляем последнее значение
-                    values.push(currentValue.trim());
+                    
+                    // Разделяем с учетом кавычек
+                    const values = parseCSVLine(line, delimiter);
                     
                     if (values.length < headers.length) {
+                        // Пробуем простое разделение как запасной вариант
+                        const simpleValues = line.split(delimiter).map(v => v.trim());
+                        if (simpleValues.length >= headers.length) {
+                            values.length = 0;
+                            simpleValues.forEach(v => values.push(v));
+                        }
+                    }
+                    
+                    if (values.length < headers.length) {
+                        if (!firstErrorRow) {
+                            firstErrorRow = { line: i+1, content: line.substring(0, 100) + '...' };
+                            console.log('Ошибка в строке', i+1, ':', line);
+                            console.log('Получено значений:', values.length, 'Ожидалось:', headers.length);
+                        }
                         errorCount++;
                         continue;
                     }
+                    
+                    // Создаем объект товара
+                    const productData = {};
+                    headers.forEach((header, index) => {
+                        let value = values[index] || '';
+                        // Очищаем значение от кавычек
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.substring(1, value.length - 1);
+                        }
+                        // Заменяем несколько пробелов на один
+                        value = value.replace(/\s+/g, ' ').trim();
+                        productData[header] = value;
+                    });
+                    
+                    // Пропускаем пустые строки
+                    if (!productData['Название товара'] || productData['Название товара'] === '' ||
+                        productData['Название товара'] === '""') {
+                        continue;
+                    }
+                    
+                    // Определяем ID товара
+                    let productId;
+                    const idField = productData['ID товара'] || productData['ID'] || productData['id'] || productData['Артикул'];
+                    if (idField && idField.toString().trim() !== '' && idField !== '""') {
+                        productId = parseInt(idField.toString().replace(/[^\d]/g, '')) || Date.now() + i;
+                    } else {
+                        productId = Date.now() + i;
+                    }
+                    
+                    // Определяем цену - ищем цену в разных полях
+                    let price = 0;
+                    const priceFields = [
+                        productData['Цена продажи'], 
+                        productData['Цена'], 
+                        productData['price'],
+                        productData['Цена продажи;;'],
+                        productData['Цена.1']
+                    ];
+                    
+                    for (const priceField of priceFields) {
+                        if (priceField && priceField.toString().trim() !== '' && priceField !== '""') {
+                            const priceStr = priceField.toString()
+                                .replace(',', '.')
+                                .replace(/[^\d.]/g, '');
+                            price = parseFloat(priceStr);
+                            if (!isNaN(price) && price > 0) {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Если цена не найдена, пробуем цену закупки
+                    if (isNaN(price) || price === 0) {
+                        const purchasePrice = productData['Цена закупки'] || productData['Цена закупки;;'];
+                        if (purchasePrice && purchasePrice.toString().trim() !== '' && purchasePrice !== '""') {
+                            price = parseFloat(purchasePrice.toString()
+                                .replace(',', '.')
+                                .replace(/[^\d.]/g, '')) * 1.2; // Наценка 20%
+                        }
+                    }
+                    
+                    // Определяем наличие
+                    const inStock = productData['В наличии'] === 'да' || 
+                                   productData['В наличии;;'] === 'да' ||
+                                   productData['Наличие'] === 'да';
+                    const preOrder = productData['Под заказ'] === 'да';
+                    
+                    let status = 'out_of_stock';
+                    if (inStock) {
+                        status = 'in_stock';
+                    } else if (preOrder) {
+                        status = 'pre_order';
+                    }
+                    
+                    // Определяем категорию - ищем в разных полях
+                    let category = 'Бытовая химия';
+                    const categoryFields = [
+                        productData['Категория.1'],
+                        productData['Категория'],
+                        productData['Категория;;'],
+                        productData['category'],
+                        productData['Категория товара']
+                    ];
+                    
+                    for (const catField of categoryFields) {
+                        if (catField && catField.toString().trim() !== '' && catField !== '""') {
+                            category = catField.toString().trim();
+                            break;
+                        }
+                    }
+                    
+                    // Определяем описание
+                    let description = productData['Описание'] || 
+                                     productData['Описание;;'] || 
+                                     productData['description'] ||
+                                     productData['Название товара'];
+                    description = description.replace(/\n+/g, ' ').trim();
+                    
+                    // Определяем изображение
+                    let image = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                    const imageFields = [
+                        productData['URL ссылка на изображение'],
+                        productData['URL ссылка на изображение;;'],
+                        productData['Изображение'],
+                        productData['image'],
+                        productData['Ссылка на изображение']
+                    ];
+                    
+                    for (const imgField of imageFields) {
+                        if (imgField && imgField.toString().trim() !== '' && imgField !== '""') {
+                            const imgUrl = imgField.toString().trim();
+                            if (imgUrl.startsWith('http')) {
+                                image = imgUrl;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    const newProduct = {
+                        id: productId,
+                        name: productData['Название товара'],
+                        category: category,
+                        price: Math.round(price) || 100, // Минимум 100 руб
+                        oldPrice: null,
+                        quantity: inStock ? 10 : 0,
+                        status: status,
+                        description: description,
+                        image: image,
+                        brand: productData['Бренд'] || '',
+                        purchasePrice: productData['Цена закупки'] ? 
+                            parseFloat(productData['Цена закупки'].toString().replace(',', '.')) : null
+                    };
+                    
+                    if (newProduct.price <= 0) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Проверяем, существует ли уже товар с таким названием
+                    const existingIndex = products.findIndex(p => 
+                        p.name.toLowerCase() === newProduct.name.toLowerCase()
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        products[existingIndex] = newProduct;
+                        updatedCount++;
+                    } else {
+                        products.push(newProduct);
+                        importedCount++;
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка обработки строки', i+1, error);
+                    errorCount++;
+                }
+            }
+            
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            loadProducts();
+            updateCategoryFilter();
+            
+            if (firstErrorRow) {
+                console.warn('Первая ошибка в строке', firstErrorRow.line, ':', firstErrorRow.content);
+            }
+            
+            showImportStats(importedCount, updatedCount, errorCount);
+            
+        } catch (error) {
+            console.error('Ошибка импорта CSV:', error);
+            showNotification('❌ Ошибка при импорте CSV файла');
+        }
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+}
+
+// Вспомогательная функция для парсинга строки CSV с учетом кавычек
+function parseCSVLine(line, delimiter) {
+    const values = [];
+    let currentValue = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // Экранированная кавычка
+                currentValue += '"';
+                i++; // Пропускаем следующую кавычку
+            } else {
+                // Начало/конец кавычек
+                inQuotes = !inQuotes;
+            }
+        } else if (char === delimiter && !inQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+        } else {
+            currentValue += char;
+        }
+    }
+    
+    // Добавляем последнее значение
+    values.push(currentValue.trim());
+    return values;
+}
                     
                     // Создаем объект товара
                     const productData = {};
@@ -2898,6 +3132,3 @@ function showImportStats(imported, updated, errors, source = 'файла') {
     </script>
 </body>
 </html>
-
-
-
