@@ -2440,256 +2440,173 @@
         }
 
         // ==================== ИМПОРТ ИЗ EXCEL/CSV ====================
-        function importExcel(file) {
-            const reader = new FileReader();
+        function importCSV(file) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            // Удаляем BOM символ (﻿) если он есть в начале файла
+            let csvData = e.target.result;
+            if (csvData.charCodeAt(0) === 0xFEFF) {
+                csvData = csvData.substring(1);
+            }
             
-            reader.onload = function(e) {
+            const lines = csvData.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) {
+                showNotification('❌ Файл пуст');
+                return;
+            }
+            
+            const headers = lines[0].split(';').map(h => h.trim());
+            
+            let importedCount = 0;
+            let updatedCount = 0;
+            let errorCount = 0;
+            
+            // Пропускаем заголовок (первую строку)
+            for (let i = 1; i < lines.length; i++) {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    // Разделяем по точке с запятой с учетом кавычек
+                    const values = [];
+                    let currentValue = '';
+                    let inQuotes = false;
                     
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    for (let char of lines[i]) {
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ';' && !inQuotes) {
+                            values.push(currentValue.trim());
+                            currentValue = '';
+                        } else {
+                            currentValue += char;
+                        }
+                    }
+                    // Добавляем последнее значение
+                    values.push(currentValue.trim());
                     
-                    if (jsonData.length === 0) {
-                        showNotification('❌ Файл не содержит данных');
-                        return;
+                    if (values.length < headers.length) {
+                        errorCount++;
+                        continue;
                     }
                     
-                    let importedCount = 0;
-                    let updatedCount = 0;
-                    let errorCount = 0;
-                    
-                    jsonData.forEach((row, index) => {
-                        try {
-                            const headers = Object.keys(row);
-                            const headerMapping = {
-                                'код_товара': 'id',
-                                'категория': 'category',
-                                'название': 'name',
-                                'бренд': 'brand', 
-                                'описание': 'description',
-                                'цена_закупки': 'purchase_price',
-                                'цена_продажи': 'sale_price',
-                                'цена': 'price',
-                                'количество': 'quantity',
-                                'статус': 'status',
-                                'ссылка_изображение': 'image_url',
-                                'изображение': 'image'
-                            };
-                            
-                            const productData = {};
-                            headers.forEach(header => {
-                                const cleanHeader = header.trim().toLowerCase();
-                                const mappedHeader = headerMapping[cleanHeader] || cleanHeader;
-                                productData[mappedHeader] = row[header];
-                            });
-                            
-                            if (!productData.name || !productData.category) {
-                                errorCount++;
-                                return;
-                            }
-                            
-                            let productId;
-                            if (productData.id && productData.id.toString().startsWith('PROD-')) {
-                                productId = parseInt(productData.id.toString().replace('PROD-', '')) || Date.now() + index;
-                            } else {
-                                productId = Date.now() + index;
-                            }
-                            
-                            const price = productData.price || productData.sale_price || 0;
-                            const quantity = productData.quantity || 0;
-                            
-                            const newProduct = {
-                                id: productId,
-                                name: productData.name.toString(),
-                                category: productData.category.toString(),
-                                price: parseInt(price) || 0,
-                                oldPrice: null,
-                                quantity: parseInt(quantity) || 0,
-                                status: (productData.status || 'in_stock').toString().toLowerCase(),
-                                description: (productData.description || 'Описание товара').toString(),
-                                image: (productData.image_url || productData.image || 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения').toString()
-                            };
-                            
-                            const existingIndex = products.findIndex(p => p.id === newProduct.id);
-                            if (existingIndex !== -1) {
-                                products[existingIndex] = newProduct;
-                                updatedCount++;
-                            } else {
-                                products.push(newProduct);
-                                importedCount++;
-                            }
-                            
-                        } catch (error) {
-                            errorCount++;
+                    // Создаем объект товара
+                    const productData = {};
+                    headers.forEach((header, index) => {
+                        // Очищаем значение от кавычек
+                        let value = values[index] || '';
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.substring(1, value.length - 1);
                         }
+                        productData[header] = value;
                     });
                     
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
-                    showImportStats(importedCount, updatedCount, errorCount);
+                    // Пропускаем пустые строки
+                    if (!productData['Название товара'] || productData['Название товара'] === '') {
+                        continue;
+                    }
                     
-                } catch (error) {
-                    showNotification('❌ Ошибка при импорте файла');
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-
-        function importCSV(file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const csvData = e.target.result;
-                    const lines = csvData.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim());
+                    // Определяем ID товара
+                    let productId;
+                    if (productData['ID товара'] && productData['ID товара'].toString().trim() !== '') {
+                        productId = parseInt(productData['ID товара']) || Date.now() + i;
+                    } else {
+                        productId = Date.now() + i;
+                    }
                     
-                    const headerMapping = {
-                        'код_товара': 'id',
-                        'категория': 'category',
-                        'название': 'name',
-                        'бренд': 'brand', 
-                        'описание': 'description',
-                        'цена_закупки': 'purchase_price',
-                        'цена_продажи': 'sale_price',
-                        'цена': 'price',
-                        'количество': 'quantity',
-                        'статус': 'status',
-                        'ссылка_изображение': 'image_url',
-                        'изображение': 'image'
+                    // Определяем цену
+                    let price = 0;
+                    if (productData['Цена продажи'] && productData['Цена продажи'] !== '') {
+                        price = parseFloat(productData['Цена продажи'].toString().replace(',', '.'));
+                    }
+                    
+                    if (isNaN(price) || price === 0) {
+                        if (productData['Цена закупки'] && productData['Цена закупки'] !== '') {
+                            price = parseFloat(productData['Цена закупки'].toString().replace(',', '.')) * 1.2; // Наценка 20%
+                        }
+                    }
+                    
+                    // Определяем наличие
+                    const inStock = productData['В наличии'] === 'да';
+                    const preOrder = productData['Под заказ'] === 'да';
+                    
+                    let status = 'out_of_stock';
+                    if (inStock) {
+                        status = 'in_stock';
+                    } else if (preOrder) {
+                        status = 'pre_order';
+                    }
+                    
+                    // Определяем категорию
+                    let category = productData['Категория'] || 'Бытовая химия';
+                    
+                    // Если в конце строки есть дополнительные категории и префиксы
+                    if (productData['Категория.1']) {
+                        category = productData['Категория.1'] || category;
+                    }
+                    
+                    // Определяем описание
+                    let description = productData['Описание'] || productData['Название товара'];
+                    // Убираем лишние переносы строк
+                    description = description.replace(/\n+/g, '\n').trim();
+                    
+                    // Определяем изображение
+                    let image = productData['URL ссылка на изображение'] || 
+                                productData['URL ссылка на изображение;;'] || 
+                                'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                    
+                    const newProduct = {
+                        id: productId,
+                        name: productData['Название товара'],
+                        category: category,
+                        price: Math.round(price) || 0,
+                        oldPrice: null,
+                        quantity: inStock ? 10 : 0,
+                        status: status,
+                        description: description,
+                        image: image,
+                        brand: productData['Бренд'] || '',
+                        purchasePrice: productData['Цена закупки'] ? parseFloat(productData['Цена закупки'].toString().replace(',', '.')) : null
                     };
                     
-                    const englishHeaders = headers.map(header => {
-                        const cleanHeader = header.trim().toLowerCase();
-                        return headerMapping[cleanHeader] || header;
-                    });
-                    
-                    let importedCount = 0;
-                    let updatedCount = 0;
-                    let errorCount = 0;
-                    
-                    for (let i = 1; i < lines.length; i++) {
-                        if (lines[i].trim() === '') continue;
-                        
-                        try {
-                            const values = lines[i].split(',').map(v => v.trim());
-                            if (values.length < englishHeaders.length) {
-                                errorCount++;
-                                continue;
-                            }
-                            
-                            const productData = {};
-                            englishHeaders.forEach((header, index) => {
-                                productData[header] = (values[index] || '').trim();
-                            });
-                            
-                            if (!productData.name || !productData.category) {
-                                errorCount++;
-                                continue;
-                            }
-                            
-                            let productId;
-                            if (productData.id && productData.id.startsWith('PROD-')) {
-                                productId = parseInt(productData.id.replace('PROD-', '')) || Date.now() + i;
-                            } else {
-                                productId = Date.now() + i;
-                            }
-                            
-                            const price = productData.price || productData.sale_price || 0;
-                            const quantity = productData.quantity || 0;
-                            
-                            const newProduct = {
-                                id: productId,
-                                name: productData.name,
-                                category: productData.category,
-                                price: parseInt(price) || 0,
-                                oldPrice: null,
-                                quantity: parseInt(quantity) || 0,
-                                status: productData.status || 'in_stock',
-                                description: productData.description || 'Описание товара',
-                                image: productData.image_url || productData.image || 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения'
-                            };
-                            
-                            const existingIndex = products.findIndex(p => p.id === newProduct.id);
-                            if (existingIndex !== -1) {
-                                products[existingIndex] = newProduct;
-                                updatedCount++;
-                            } else {
-                                products.push(newProduct);
-                                importedCount++;
-                            }
-                            
-                        } catch (error) {
-                            errorCount++;
-                        }
+                    if (newProduct.price === 0) {
+                        errorCount++;
+                        continue;
                     }
                     
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
-                    showImportStats(importedCount, updatedCount, errorCount);
+                    // Проверяем, существует ли уже товар с таким названием
+                    const existingIndex = products.findIndex(p => 
+                        p.name.toLowerCase() === newProduct.name.toLowerCase()
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        products[existingIndex] = newProduct;
+                        updatedCount++;
+                    } else {
+                        products.push(newProduct);
+                        importedCount++;
+                    }
                     
                 } catch (error) {
-                    showNotification('❌ Ошибка при импорте файла');
+                    console.error('Ошибка обработки строки', i, error);
+                    errorCount++;
                 }
-            };
-            
-            reader.readAsText(file, 'UTF-8');
-        }
-
-        function importProducts(file) {
-            if (!file) return;
-
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            
-            if (fileExtension === 'csv') {
-                importCSV(file);
-            } else if (fileExtension === 'xlsx') {
-                importExcel(file);
-            } else {
-                showNotification('❌ Поддерживаются только CSV и XLSX файлы');
             }
+            
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            loadProducts();
+            updateCategoryFilter();
+            
+            showImportStats(importedCount, updatedCount, errorCount);
+            
+        } catch (error) {
+            console.error('Ошибка импорта CSV:', error);
+            showNotification('❌ Ошибка при импорте CSV файла');
         }
-
-        function showImportStats(imported, updated, errors, source = 'файла') {
-            const panelContent = document.getElementById('productsPanelContent');
-            
-            const statsHTML = `
-                <div class="import-info">
-                    <h4>📊 Результаты импорта из ${source}</h4>
-                    <p>Импорт товаров завершен успешно!</p>
-                    <div class="import-stats">
-                        <div class="stat-item">
-                            <div class="stat-value stat-added">${imported}</div>
-                            <div>Добавлено</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value stat-updated">${updated}</div>
-                            <div>Обновлено</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value stat-errors">${errors}</div>
-                            <div>Ошибок</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            panelContent.innerHTML = statsHTML + panelContent.innerHTML;
-            
-            let message = `✅ Импорт из ${source} завершен! Добавлено: ${imported}`;
-            if (updated > 0) message += `, Обновлено: ${updated}`;
-            if (errors > 0) message += `, Ошибок: ${errors}`;
-            
-            showNotification(message);
-        }
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+}
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function showNotification(message) {
@@ -2833,3 +2750,4 @@
     </script>
 </body>
 </html>
+
