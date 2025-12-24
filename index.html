@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин для своих - Главная</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1339,6 +1338,11 @@
     </footer>
 
     <script>
+        // ==================== НАСТРОЙКИ GOOGLE SHEETS ====================
+        const GOOGLE_SHEET_ID = '1udzmDOhQVIUf86IM2GXUFfYm_oOOTlGl6doZdImPr-s'; // Ваш ID таблицы
+        const GOOGLE_API_KEY = 'AIzaSyB8uL0ZqZXC-zY54EYA7fNlMWiV0fXrdjM'; // Ключ API
+        const SHEET_NAME = 'Sheet1'; // Название листа
+
         // ==================== ОСНОВНЫЕ ДАННЫЕ ====================
         let products = JSON.parse(localStorage.getItem('products')) || [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -1412,52 +1416,110 @@
             logoText: 'ДЛЯ СВОИХ'
         };
 
-        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-        function parseCSVLine(line, delimiter) {
-    const values = [];
-    let currentValue = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        const nextChar = line[i + 1];
-        
-        if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-                currentValue += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
+        // ==================== ЗАГРУЗКА ИЗ GOOGLE SHEETS ====================
+        async function loadProductsFromGoogleSheets() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.innerHTML = '<p>Загрузка товаров из Google Sheets...</p>';
+            document.getElementById('productsGrid').appendChild(loadingDiv);
+            
+            try {
+                // Формируем URL для Google Sheets API
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_API_KEY}`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.values || data.values.length === 0) {
+                    throw new Error('Таблица пустая или нет данных');
+                }
+                
+                // Преобразуем данные
+                const headers = data.values[0];
+                const rows = data.values.slice(1);
+                
+                const newProducts = rows.map((row, index) => {
+                    const product = {};
+                    headers.forEach((header, i) => {
+                        product[header] = row[i] || '';
+                    });
+                    
+                    // Обработка статуса
+                    let status = 'out_of_stock';
+                    const inStock = product['В наличии'] || '';
+                    const preOrder = product['Под заказ'] || '';
+                    
+                    if (inStock.toString().toLowerCase().includes('да')) {
+                        status = 'in_stock';
+                    } else if (preOrder.toString().toLowerCase().includes('да')) {
+                        status = 'pre_order';
+                    }
+                    
+                    // Обработка цены
+                    let price = 0;
+                    const priceValue = product['Цена продажи'] || product['Цена'] || '';
+                    if (priceValue) {
+                        price = parseInt(priceValue.toString().replace(/[^\d]/g, '')) || 0;
+                    }
+                    
+                    // Обработка ID
+                    let productId;
+                    if (product['ID товара']) {
+                        const idStr = product['ID товара'].toString();
+                        if (idStr.startsWith('BH')) {
+                            const idNum = parseInt(idStr.replace(/\D/g, ''));
+                            productId = idNum || Date.now() + index;
+                        } else {
+                            productId = parseInt(idStr) || Date.now() + index;
+                        }
+                    } else {
+                        productId = Date.now() + index;
+                    }
+                    
+                    return {
+                        id: productId,
+                        name: (product['Название товара'] || 'Товар без названия').toString(),
+                        category: (product['Категория'] || 'Бытовая химия').toString(),
+                        price: price || 100,
+                        oldPrice: null,
+                        quantity: status === 'in_stock' ? 10 : 0,
+                        status: status,
+                        description: (product['Описание'] || '').toString().substring(0, 500),
+                        image: (product['URL ссылка на изображение'] || 
+                               'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения').toString()
+                    };
+                });
+                
+                // Сохраняем только если есть товары
+                if (newProducts.length > 0) {
+                    products = newProducts;
+                    localStorage.setItem('products', JSON.stringify(products));
+                    filteredProducts = [...products];
+                    
+                    showNotification(`✅ Загружено ${products.length} товаров из Google Sheets`);
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки из Google Sheets:', error);
+                showNotification(`❌ Ошибка загрузки: ${error.message}`);
+                
+                // Используем локальные данные если есть
+                if (products.length === 0) {
+                    addTestProducts();
+                }
             }
-        } else if (char === delimiter && !inQuotes) {
-            values.push(currentValue);
-            currentValue = '';
-        } else {
-            currentValue += char;
-        }
-    }
-    
-    values.push(currentValue);
-    return values;
-}
-
-// И добавьте эту функцию для очистки описания
-function cleanDescription(text) {
-    if (!text) return '';
-    // Убираем лишние двоеточия и точки с запятой, которые не нужны
-    return text
-        .replace(/([^:]):([^:])/g, '$1 $2')  // Заменяем одиночные двоеточия на пробел
-        .replace(/;/g, ',')  // Заменяем точки с запятой на запятые
-        .replace(/\s+/g, ' ')  // Убираем лишние пробелы
-        .trim();
-}
-
-        function cleanCSVValue(value) {
-            if (!value) return '';
-            return value.toString().trim().replace(/^["']|["']$/g, '');
+            
+            // Обновляем отображение
+            loadProducts();
+            updateCategoryFilter();
         }
 
-        // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function loadCategories() {
             const categoriesGrid = document.getElementById('categoriesGrid');
             categoriesGrid.innerHTML = categoriesData.map(category => {
@@ -2164,6 +2226,7 @@ function cleanDescription(text) {
             }
         }
 
+        // ==================== РЕДАКТИРОВАНИЕ ТОВАРОВ ====================
         function editProducts() {
             document.getElementById('editOverlay').style.display = 'block';
             document.getElementById('productsPanel').style.display = 'block';
@@ -2177,31 +2240,34 @@ function cleanDescription(text) {
                 <h3>🛍️ Управление товарами</h3>
                 
                 <div class="form-group">
-                    <label>📤 Импорт товаров из файла:</label>
-                    <div class="file-upload" onclick="document.getElementById('fileImport').click()">
-                        <i class="fas fa-file-import"></i>
-                        <p>Нажмите для загрузки CSV или Excel файла</p>
-                        <input type="file" id="fileImport" accept=".csv,.xlsx" style="display: none;" 
-                               onchange="importProducts(this.files[0])">
-                    </div>
+                    <label>🔄 Обновить из Google Sheets:</label>
+                    <button class="btn btn-primary" onclick="refreshFromGoogleSheets()" style="width: 100%;">
+                        <i class="fas fa-sync-alt"></i> Обновить товары из Google Sheets
+                    </button>
                     <small style="color: var(--gray); display: block; margin-top: 10px;">
-                        📝 Поддерживаемые форматы: CSV, XLSX (Excel)<br>
-                        📋 Обязательные поля: название, категория, цена
+                        📊 Автоматически загружает все товары из вашей Google таблицы<br>
+                        🔄 Обновляет цены и наличие в реальном времени
                     </small>
                 </div>
 
                 <div class="form-group">
-                    <label>📱 Импорт из WhatsApp:</label>
-                    <div class="file-upload" onclick="document.getElementById('whatsappImport').click()">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Нажмите для загрузки экспорта из WhatsApp</p>
-                        <input type="file" id="whatsappImport" accept=".txt,.csv" style="display: none;" 
-                               onchange="importFromWhatsApp(this.files[0])">
+                    <label>🔗 Ссылка на Google Таблицу:</label>
+                    <div class="form-control" style="background: #f8f9fa; padding: 12px; border-radius: 8px; word-break: break-all;">
+                        https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit
                     </div>
-                    <small style="color: var(--gray); display: block; margin-top: 10px;">
-                        💡 Поддерживается текстовый экспорт чата WhatsApp<br>
-                        📋 Формат: каждая строка должна содержать название и цену
+                    <small style="color: var(--gray); display: block; margin-top: 5px;">
+                        Нажмите, чтобы открыть таблицу для редактирования
                     </small>
+                </div>
+
+                <div class="form-group">
+                    <label>📤 Импорт товаров из файла (резервный):</label>
+                    <div class="file-upload" onclick="document.getElementById('fileImport').click()">
+                        <i class="fas fa-file-import"></i>
+                        <p>Нажмите для загрузки CSV файла</p>
+                        <input type="file" id="fileImport" accept=".csv" style="display: none;" 
+                               onchange="importCSV(this.files[0])">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -2249,6 +2315,15 @@ function cleanDescription(text) {
                     </div>
                 </div>
             `;
+        }
+
+        function refreshFromGoogleSheets() {
+            showNotification('🔄 Обновление товаров из Google Sheets...');
+            loadProductsFromGoogleSheets();
+            setTimeout(() => {
+                loadProductsEditor();
+                showNotification('✅ Товары обновлены!');
+            }, 2000);
         }
 
         function filterProductsInEditor() {
@@ -2404,445 +2479,6 @@ function cleanDescription(text) {
             }
         }
 
-        // ==================== ИМПОРТ ИЗ WHATSAPP ====================
-        function importFromWhatsApp(file) {
-            if (!file) return;
-
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const content = e.target.result;
-                    const lines = content.split('\n').filter(line => line.trim() !== '');
-                    
-                    let importedCount = 0;
-                    let errorCount = 0;
-                    
-                    lines.forEach((line, index) => {
-                        try {
-                            const priceMatch = line.match(/(\d+)[\s]*₽|руб|рублей|р\./i);
-                            let productName = line;
-                            let price = 0;
-                            
-                            if (priceMatch) {
-                                price = parseInt(priceMatch[1]);
-                                productName = line.replace(priceMatch[0], '').trim();
-                            }
-                            
-                            productName = productName.replace(/[^\w\sа-яА-ЯёЁ\-]/gi, ' ').trim();
-                            
-                            if (!productName || productName.length < 2) {
-                                errorCount++;
-                                return;
-                            }
-                            
-                            let category = 'Разное';
-                            const categoryKeywords = {
-                                'Бытовая химия': ['fairy', 'мило', 'шампунь', 'гель', 'мыло', 'чистящ', 'порошок', 'кондиционер'],
-                                'Постельное белье': ['постель', 'белье', 'комплект', 'наволочка', 'простыня', 'пододеяльник'],
-                                'Рыба и морепродукты': ['рыба', 'лосось', 'креветки', 'икра', 'морепродукт', 'кальмар'],
-                                'Мясо и птица': ['мясо', 'курица', 'говядина', 'свинина', 'птица', 'грудка', 'окорочка'],
-                                'Кондитерские изделия': ['торт', 'пирожное', 'печенье', 'шоколад', 'конфеты', 'сладости'],
-                                'Молочные продукты': ['молоко', 'сыр', 'творог', 'йогурт', 'кефир', 'сметана', 'масло'],
-                                'Мангальные зоны и мангалы': ['мангал', 'гриль', 'уголь', 'шампур', 'решетка', 'барбекю']
-                            };
-                            
-                            for (const [cat, keywords] of Object.entries(categoryKeywords)) {
-                                if (keywords.some(keyword => productName.toLowerCase().includes(keyword))) {
-                                    category = cat;
-                                    break;
-                                }
-                            }
-                            
-                            const newProduct = {
-                                id: Date.now() + index,
-                                name: productName,
-                                category: category,
-                                price: price || 100,
-                                oldPrice: null,
-                                quantity: 1,
-                                status: 'in_stock',
-                                description: `Товар импортирован из WhatsApp: ${productName}`,
-                                image: 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=WhatsApp'
-                            };
-                            
-                            products.push(newProduct);
-                            importedCount++;
-                            
-                        } catch (error) {
-                            errorCount++;
-                        }
-                    });
-                    
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
-                    
-                    showImportStats(importedCount, 0, errorCount, 'WhatsApp');
-                    
-                } catch (error) {
-                    showNotification('❌ Ошибка при импорте из WhatsApp');
-                }
-            };
-            
-            reader.readAsText(file, 'UTF-8');
-        }
-
-        // ==================== ИМПОРТ ИЗ EXCEL/CSV ====================
-        function importExcel(file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                    
-                    if (jsonData.length === 0) {
-                        showNotification('❌ Файл не содержит данных');
-                        return;
-                    }
-                    
-                    let importedCount = 0;
-                    let updatedCount = 0;
-                    let errorCount = 0;
-                    
-                    jsonData.forEach((row, index) => {
-                        try {
-                            const headers = Object.keys(row);
-                            const headerMapping = {
-                                'код_товара': 'id',
-                                'категория': 'category',
-                                'название': 'name',
-                                'бренд': 'brand', 
-                                'описание': 'description',
-                                'цена_закупки': 'purchase_price',
-                                'цена_продажи': 'sale_price',
-                                'цена': 'price',
-                                'количество': 'quantity',
-                                'статус': 'status',
-                                'ссылка_изображение': 'image_url',
-                                'изображение': 'image'
-                            };
-                            
-                            const productData = {};
-                            headers.forEach(header => {
-                                const cleanHeader = header.trim().toLowerCase();
-                                const mappedHeader = headerMapping[cleanHeader] || cleanHeader;
-                                productData[mappedHeader] = row[header];
-                            });
-                            
-                            if (!productData.name || !productData.category) {
-                                errorCount++;
-                                return;
-                            }
-                            
-                            let productId;
-                            if (productData.id && productData.id.toString().startsWith('PROD-')) {
-                                productId = parseInt(productData.id.toString().replace('PROD-', '')) || Date.now() + index;
-                            } else {
-                                productId = Date.now() + index;
-                            }
-                            
-                            const price = productData.price || productData.sale_price || 0;
-                            const quantity = productData.quantity || 0;
-                            
-                            const newProduct = {
-                                id: productId,
-                                name: productData.name.toString(),
-                                category: productData.category.toString(),
-                                price: parseInt(price) || 0,
-                                oldPrice: null,
-                                quantity: parseInt(quantity) || 0,
-                                status: (productData.status || 'in_stock').toString().toLowerCase(),
-                                description: (productData.description || 'Описание товара').toString(),
-                                image: (productData.image_url || productData.image || 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения').toString()
-                            };
-                            
-                            const existingIndex = products.findIndex(p => p.id === newProduct.id);
-                            if (existingIndex !== -1) {
-                                products[existingIndex] = newProduct;
-                                updatedCount++;
-                            } else {
-                                products.push(newProduct);
-                                importedCount++;
-                            }
-                            
-                        } catch (error) {
-                            errorCount++;
-                        }
-                    });
-                    
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
-                    showImportStats(importedCount, updatedCount, errorCount);
-                    
-                } catch (error) {
-                    showNotification('❌ Ошибка при импорте файла');
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-
-        // ==================== ОСНОВНАЯ ФУНКЦИЯ ИМПОРТА CSV ====================
-        function importCSV(file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    let csvData = e.target.result;
-                    
-                    // Удаляем BOM символ
-                    if (csvData.charCodeAt(0) === 0xFEFF) {
-                        csvData = csvData.substring(1);
-                    }
-                    
-                    // Определяем разделитель
-                    const firstLine = csvData.split('\n')[0];
-                    let delimiter = ';';
-                    if (firstLine.includes(';')) {
-                        delimiter = ';';
-                    } else if (firstLine.includes(',')) {
-                        delimiter = ',';
-                    } else if (firstLine.includes('\t')) {
-                        delimiter = '\t';
-                    }
-                    
-                    console.log('Используем разделитель:', delimiter);
-                    
-                    const lines = csvData.split('\n').filter(line => line.trim() !== '');
-                    if (lines.length === 0) {
-                        showNotification('❌ Файл пуст');
-                        return;
-                    }
-                    
-                    // Парсим заголовки
-                    const headers = parseCSVLine(lines[0], delimiter).map(h => cleanCSVValue(h));
-                    console.log('Заголовки CSV:', headers);
-                    
-                    let importedCount = 0;
-                    let updatedCount = 0;
-                    let errorCount = 0;
-                    
-                    // Маппинг заголовков CSV на поля товаров
-                    const headerMapping = {
-                        'id товара': 'id',
-                        'id товара': 'id',
-                        'id': 'id',
-                        'категория': 'category',
-                        'category': 'category',
-                        'название товара': 'name',
-                        'название': 'name',
-                        'name': 'name',
-                        'бренд': 'brand',
-                        'brand': 'brand',
-                        'описание': 'description',
-                        'description': 'description',
-                        'цена закупки': 'purchase_price',
-                        'цена продажи': 'price',
-                        'цена продажи': 'price',
-                        'цена': 'price',
-                        'price': 'price',
-                        'в наличии': 'in_stock',
-                        'в наличии': 'in_stock',
-                        'под заказ': 'pre_order',
-                        'под заказ': 'pre_order',
-                        'url ссылка на изображение': 'image',
-                        'ссылка': 'image',
-                        'image': 'image',
-                        'изображение': 'image'
-                    };
-                    
-                    // Пропускаем заголовок (первую строку)
-                    for (let i = 1; i < lines.length; i++) {
-                        try {
-                            const line = lines[i].trim();
-                            if (line === '') continue;
-                            
-                            const values = parseCSVLine(line, delimiter);
-                            console.log(`Строка ${i}:`, values);
-                            
-                            // Создаем объект товара
-                            const productData = {};
-                            headers.forEach((header, index) => {
-                                const cleanHeader = header.toLowerCase().trim();
-                                const mappedHeader = headerMapping[cleanHeader] || cleanHeader;
-                                productData[mappedHeader] = cleanCSVValue(values[index] || '');
-                            });
-                            
-                            console.log('Данные товара:', productData);
-                            
-                            // Проверяем обязательные поля
-                            if (!productData.name || !productData.name.trim()) {
-                                console.log('Пропускаем - нет названия');
-                                errorCount++;
-                                continue;
-                            }
-                            
-                            // Обработка ID
-                            let productId;
-                            if (productData.id && productData.id.toString().trim()) {
-                                const idStr = productData.id.toString();
-                                if (idStr.startsWith('BH')) {
-                                    // Для BH001, BH002 и т.д. - извлекаем цифры
-                                    const idNum = parseInt(idStr.replace(/\D/g, ''));
-                                    productId = idNum || Date.now() + i;
-                                } else {
-                                    productId = parseInt(idStr) || Date.now() + i;
-                                }
-                            } else {
-                                productId = Date.now() + i;
-                            }
-                            
-                            // Обработка цены
-                            let price = 0;
-                            if (productData.price) {
-                                const priceStr = productData.price.toString();
-                                price = parseInt(priceStr.replace(/[^\d]/g, '')) || 0;
-                            }
-                            if (price <= 0) {
-                                price = 100; // Минимальная цена
-                            }
-                            
-                            // Обработка категории
-                            let category = (productData.category || 'Бытовая химия').trim();
-                            if (!category) category = 'Бытовая химия';
-                            
-                            // Обработка статуса
-                            let status = 'out_of_stock';
-                            const inStockValue = productData.in_stock || '';
-                            const preOrderValue = productData.pre_order || '';
-                            
-                            if (inStockValue.toString().toLowerCase().includes('да') || 
-                                inStockValue.toString().toLowerCase().includes('yes')) {
-                                status = 'in_stock';
-                            } else if (preOrderValue.toString().toLowerCase().includes('да') ||
-                                     preOrderValue.toString().toLowerCase().includes('yes')) {
-                                status = 'pre_order';
-                            }
-                            
-                            // Обработка изображения
-                            let image = productData.image || 
-                                        'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
-                            
-                            // Очистка описания от спецсимволов
-                            let description = productData.description || productData.name || '';
-                            description = description.replace(/[^\x00-\x7F\x80-\xFF\s.,!?;:()-]/g, ' ').substring(0, 500);
-                            
-                            // Создаем объект товара для магазина
-                            const newProduct = {
-                                id: productId,
-                                name: productData.name.trim(),
-                                category: category,
-                                price: price,
-                                oldPrice: null,
-                                quantity: status === 'in_stock' ? 10 : 0,
-                                status: status,
-                                description: description || 'Описание товара',
-                                image: image.trim()
-                            };
-                            
-                            console.log('Создан товар:', newProduct.name, 'Цена:', newProduct.price);
-                            
-                            // Проверяем существующий товар по названию и категории
-                            const existingIndex = products.findIndex(p => 
-                                p.name.toLowerCase() === newProduct.name.toLowerCase() &&
-                                p.category.toLowerCase() === newProduct.category.toLowerCase()
-                            );
-                            
-                            if (existingIndex !== -1) {
-                                products[existingIndex] = newProduct;
-                                updatedCount++;
-                                console.log('Обновлен товар:', newProduct.name);
-                            } else {
-                                products.push(newProduct);
-                                importedCount++;
-                                console.log('Добавлен товар:', newProduct.name);
-                            }
-                            
-                        } catch (error) {
-                            console.error('Ошибка обработки строки', i+1, error);
-                            errorCount++;
-                        }
-                    }
-                    
-                    // Сохраняем товары
-                    localStorage.setItem('products', JSON.stringify(products));
-                    
-                    // Обновляем отображение
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
-                    
-                    // Показываем статистику
-                    showImportStats(importedCount, updatedCount, errorCount);
-                    
-                    // Обновляем количество товаров в магазине
-                    showNotification(`✅ Импорт завершен! Добавлено: ${importedCount}, Обновлено: ${updatedCount}`);
-                    
-                } catch (error) {
-                    console.error('Ошибка импорта CSV:', error);
-                    showNotification('❌ Ошибка при импорте CSV файла: ' + error.message);
-                }
-            };
-            
-            reader.readAsText(file, 'UTF-8');
-        }
-
-        function showImportStats(imported, updated, errors, source = 'файла') {
-            const panelContent = document.getElementById('productsPanelContent');
-            
-            const statsHTML = `
-                <div class="import-info">
-                    <h4>📊 Результаты импорта из ${source}</h4>
-                    <p>Импорт товаров завершен успешно!</p>
-                    <div class="import-stats">
-                        <div class="stat-item">
-                            <div class="stat-value stat-added">${imported}</div>
-                            <div>Добавлено</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value stat-updated">${updated}</div>
-                            <div>Обновлено</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value stat-errors">${errors}</div>
-                            <div>Ошибок</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            panelContent.innerHTML = statsHTML + panelContent.innerHTML;
-            
-            let message = `✅ Импорт из ${source} завершен! Добавлено: ${imported}`;
-            if (updated > 0) message += `, Обновлено: ${updated}`;
-            if (errors > 0) message += `, Ошибок: ${errors}`;
-            
-            showNotification(message);
-        }
-
-        function importProducts(file) {
-            if (!file) return;
-
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            
-            if (fileExtension === 'csv') {
-                importCSV(file);
-            } else if (fileExtension === 'xlsx') {
-                importExcel(file);
-            } else {
-                showNotification('❌ Поддерживаются только CSV и XLSX файлы');
-            }
-        }
-
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function showNotification(message) {
             const notification = document.createElement('div');
@@ -2931,6 +2567,37 @@ function cleanDescription(text) {
             showNotification('👋 До свидания!');
         }
 
+        function addTestProducts() {
+            const testProducts = [
+                {
+                    id: 1001,
+                    name: 'FAIRY banane - 5 литров',
+                    category: 'Бытовая химия',
+                    price: 800,
+                    oldPrice: null,
+                    quantity: 10,
+                    status: 'in_stock',
+                    description: 'Концентрированное средство для мытья посуды. Объем: 5 литров. Аромат: Банан.',
+                    image: 'https://via.placeholder.com/300x200/667eea/ffffff?text=FAIRY'
+                },
+                {
+                    id: 1002,
+                    name: 'Комплект постельного белья Люкс',
+                    category: 'Постельное белье',
+                    price: 2500,
+                    oldPrice: 3000,
+                    quantity: 5,
+                    status: 'in_stock',
+                    description: 'Набор постельного белья из 100% хлопка. Размер: 2.0 спальный.',
+                    image: 'https://via.placeholder.com/300x200/f093fb/ffffff?text=Постельное'
+                }
+            ];
+
+            products = testProducts;
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+        }
+
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', function() {
             // Применяем сохраненные настройки
@@ -2944,48 +2611,23 @@ function cleanDescription(text) {
 
             // Загружаем данные
             loadCategories();
-            filteredProducts = [...products];
-            loadProducts();
-            updateCategoryFilter();
-            updateCartCount();
-
-            // Добавляем тестовые товары если их нет
-            if (products.length === 0) {
-                const testProducts = [
-                    {
-                        id: 1001,
-                        name: 'FAIRY banane - 5 литров',
-                        category: 'Бытовая химия',
-                        price: 800,
-                        oldPrice: null,
-                        quantity: 10,
-                        status: 'in_stock',
-                        description: 'Концентрированное средство для мытья посуды. Объем: 5 литров. Аромат: Банан.',
-                        image: 'https://via.placeholder.com/300x200/667eea/ffffff?text=FAIRY'
-                    },
-                    {
-                        id: 1002,
-                        name: 'Комплект постельного белья Люкс',
-                        category: 'Постельное белье',
-                        price: 2500,
-                        oldPrice: 3000,
-                        quantity: 5,
-                        status: 'in_stock',
-                        description: 'Набор постельного белья из 100% хлопка. Размер: 2.0 спальный.',
-                        image: 'https://via.placeholder.com/300x200/f093fb/ffffff?text=Постельное'
-                    }
-                ];
-
-                products = testProducts;
-                localStorage.setItem('products', JSON.stringify(products));
+            
+            // Проверяем, есть ли товары в localStorage
+            const savedProducts = JSON.parse(localStorage.getItem('products'));
+            if (!savedProducts || savedProducts.length === 0) {
+                // Если нет товаров, загружаем из Google Sheets
+                loadProductsFromGoogleSheets();
+            } else {
+                // Используем сохраненные товары
+                products = savedProducts;
                 filteredProducts = [...products];
                 loadProducts();
                 updateCategoryFilter();
             }
             
+            updateCartCount();
             console.log('Магазин загружен. Товаров:', products.length);
         });
     </script>
 </body>
 </html>
-
