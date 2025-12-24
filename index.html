@@ -1342,7 +1342,7 @@
         // ==================== ОСНОВНЫЕ ДАННЫЕ ====================
         let products = JSON.parse(localStorage.getItem('products')) || [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let filteredProducts = [];
+        let filteredProducts = [...products];
         let categoriesData = JSON.parse(localStorage.getItem('categoriesData')) || [
             { 
                 name: 'Бытовая химия', 
@@ -1411,6 +1411,40 @@
             headerColor: '#2c5aa0',
             logoText: 'ДЛЯ СВОИХ'
         };
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+        function parseCSVLine(line, delimiter) {
+            const values = [];
+            let currentValue = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentValue += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === delimiter && !inQuotes) {
+                    values.push(currentValue);
+                    currentValue = '';
+                } else {
+                    currentValue += char;
+                }
+            }
+            
+            values.push(currentValue);
+            return values;
+        }
+
+        function cleanCSVValue(value) {
+            if (!value) return '';
+            return value.toString().trim().replace(/^["']|["']$/g, '');
+        }
 
         // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
         function loadCategories() {
@@ -2546,232 +2580,209 @@
             reader.readAsArrayBuffer(file);
         }
 
+        // ==================== ОСНОВНАЯ ФУНКЦИЯ ИМПОРТА CSV ====================
         function importCSV(file) {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        try {
-            let csvData = e.target.result;
+            const reader = new FileReader();
             
-            // Удаляем BOM символ (﻿) если он есть в начале файла
-            if (csvData.charCodeAt(0) === 0xFEFF) {
-                csvData = csvData.substring(1);
-            }
-            
-            // Убираем все лишние символы вроде ❤️ ✅ 🧴
-            csvData = csvData.replace(/[^\x00-\x7F\x80-\xFF\n;,"]/g, '');
-            
-            // Определяем разделитель по первой строке
-            const firstLine = csvData.split('\n')[0];
-            const semicolonCount = (firstLine.match(/;/g) || []).length;
-            const commaCount = (firstLine.match(/,/g) || []).length;
-            const tabCount = (firstLine.match(/\t/g) || []).length;
-            
-            let delimiter = ';';
-            if (commaCount > semicolonCount && commaCount > tabCount) {
-                delimiter = ',';
-            } else if (tabCount > semicolonCount && tabCount > commaCount) {
-                delimiter = '\t';
-            }
-            
-            console.log('Определен разделитель:', delimiter === ';' ? 'точка с запятой' : 
-                                                   delimiter === ',' ? 'запятая' : 'табуляция');
-            
-            const lines = csvData.split('\n').filter(line => line.trim() !== '');
-            if (lines.length === 0) {
-                showNotification('❌ Файл пуст');
-                return;
-            }
-            
-            // Берем заголовки из первой строки
-            const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
-            console.log('Заголовки:', headers);
-            
-            let importedCount = 0;
-            let updatedCount = 0;
-            let errorCount = 0;
-            
-            // Пропускаем заголовок (первую строку)
-            for (let i = 1; i < lines.length; i++) {
+            reader.onload = function(e) {
                 try {
-                    const line = lines[i].trim();
-                    if (line === '') continue;
+                    let csvData = e.target.result;
                     
-                    // Простой парсинг строки
-                    const values = [];
-                    let currentValue = '';
-                    let inQuotes = false;
-                    
-                    for (let j = 0; j < line.length; j++) {
-                        const char = line[j];
-                        
-                        if (char === '"') {
-                            if (inQuotes && line[j + 1] === '"') {
-                                currentValue += '"';
-                                j++;
-                            } else {
-                                inQuotes = !inQuotes;
-                            }
-                        } else if (char === delimiter && !inQuotes) {
-                            values.push(currentValue.trim());
-                            currentValue = '';
-                        } else {
-                            currentValue += char;
-                        }
-                    }
-                    values.push(currentValue.trim());
-                    
-                    // Создаем объект товара
-                    const product = {};
-                    headers.forEach((header, index) => {
-                        let value = values[index] || '';
-                        // Убираем кавычки если есть
-                        if (value.startsWith('"') && value.endsWith('"')) {
-                            value = value.substring(1, value.length - 1);
-                        }
-                        product[header] = value;
-                    });
-                    
-                    // Пропускаем если нет названия
-                    if (!product['Название товара'] || !product['Название товара'].trim()) {
-                        continue;
+                    // Удаляем BOM символ
+                    if (csvData.charCodeAt(0) === 0xFEFF) {
+                        csvData = csvData.substring(1);
                     }
                     
-                    // Определяем ID
-                    let productId = Date.now() + i;
-                    if (product['ID товара'] && product['ID товара'].trim()) {
-                        const idNum = parseInt(product['ID товара'].replace(/[^\d]/g, ''));
-                        if (!isNaN(idNum)) productId = idNum;
+                    // Определяем разделитель
+                    const firstLine = csvData.split('\n')[0];
+                    let delimiter = ';';
+                    if (firstLine.includes(';')) {
+                        delimiter = ';';
+                    } else if (firstLine.includes(',')) {
+                        delimiter = ',';
+                    } else if (firstLine.includes('\t')) {
+                        delimiter = '\t';
                     }
                     
-                    // Определяем цену
-                    let price = 0;
-                    const priceValue = product['Цена продажи'] || product['Цена'];
-                    if (priceValue) {
-                        price = parseInt(priceValue.toString().replace(/[^\d]/g, '')) || 0;
+                    console.log('Используем разделитель:', delimiter);
+                    
+                    const lines = csvData.split('\n').filter(line => line.trim() !== '');
+                    if (lines.length === 0) {
+                        showNotification('❌ Файл пуст');
+                        return;
                     }
                     
-                    // Определяем категорию
-                    let category = product['Категория'] || 'Бытовая химия';
+                    // Парсим заголовки
+                    const headers = parseCSVLine(lines[0], delimiter).map(h => cleanCSVValue(h));
+                    console.log('Заголовки CSV:', headers);
                     
-                    // Определяем наличие
-                    let status = 'out_of_stock';
-                    const inStock = product['В наличии'] === 'да' || product['В наличии'] === 'Да' || product['В наличии'] === 'ДА';
-                    const preOrder = product['Под заказ'] === 'да' || product['Под заказ'] === 'Да';
+                    let importedCount = 0;
+                    let updatedCount = 0;
+                    let errorCount = 0;
                     
-                    if (inStock) {
-                        status = 'in_stock';
-                    } else if (preOrder) {
-                        status = 'pre_order';
-                    }
-                    
-                    // Определяем изображение
-                    let image = product['URL ссылка на изображение'] || 
-                               'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
-                    
-                    // Убираем все emoji из описания
-                    let description = product['Описание'] || product['Название товара'];
-                    description = description.replace(/[^\x00-\x7F\x80-\xFF\s.,!?;:()-]/g, ' ');
-                    
-                    // Создаем объект для магазина
-                    const newProduct = {
-                        id: productId,
-                        name: product['Название товара'].trim(),
-                        category: category.trim(),
-                        price: price || 100, // минимум 100 руб
-                        oldPrice: null,
-                        quantity: inStock ? 10 : 0,
-                        status: status,
-                        description: description.substring(0, 500), // ограничиваем длину
-                        image: image.trim()
+                    // Маппинг заголовков CSV на поля товаров
+                    const headerMapping = {
+                        'id товара': 'id',
+                        'id товара': 'id',
+                        'id': 'id',
+                        'категория': 'category',
+                        'category': 'category',
+                        'название товара': 'name',
+                        'название': 'name',
+                        'name': 'name',
+                        'бренд': 'brand',
+                        'brand': 'brand',
+                        'описание': 'description',
+                        'description': 'description',
+                        'цена закупки': 'purchase_price',
+                        'цена продажи': 'price',
+                        'цена продажи': 'price',
+                        'цена': 'price',
+                        'price': 'price',
+                        'в наличии': 'in_stock',
+                        'в наличии': 'in_stock',
+                        'под заказ': 'pre_order',
+                        'под заказ': 'pre_order',
+                        'url ссылка на изображение': 'image',
+                        'ссылка': 'image',
+                        'image': 'image',
+                        'изображение': 'image'
                     };
                     
-                    if (newProduct.price <= 0) {
-                        errorCount++;
-                        continue;
+                    // Пропускаем заголовок (первую строку)
+                    for (let i = 1; i < lines.length; i++) {
+                        try {
+                            const line = lines[i].trim();
+                            if (line === '') continue;
+                            
+                            const values = parseCSVLine(line, delimiter);
+                            console.log(`Строка ${i}:`, values);
+                            
+                            // Создаем объект товара
+                            const productData = {};
+                            headers.forEach((header, index) => {
+                                const cleanHeader = header.toLowerCase().trim();
+                                const mappedHeader = headerMapping[cleanHeader] || cleanHeader;
+                                productData[mappedHeader] = cleanCSVValue(values[index] || '');
+                            });
+                            
+                            console.log('Данные товара:', productData);
+                            
+                            // Проверяем обязательные поля
+                            if (!productData.name || !productData.name.trim()) {
+                                console.log('Пропускаем - нет названия');
+                                errorCount++;
+                                continue;
+                            }
+                            
+                            // Обработка ID
+                            let productId;
+                            if (productData.id && productData.id.toString().trim()) {
+                                const idStr = productData.id.toString();
+                                if (idStr.startsWith('BH')) {
+                                    // Для BH001, BH002 и т.д. - извлекаем цифры
+                                    const idNum = parseInt(idStr.replace(/\D/g, ''));
+                                    productId = idNum || Date.now() + i;
+                                } else {
+                                    productId = parseInt(idStr) || Date.now() + i;
+                                }
+                            } else {
+                                productId = Date.now() + i;
+                            }
+                            
+                            // Обработка цены
+                            let price = 0;
+                            if (productData.price) {
+                                const priceStr = productData.price.toString();
+                                price = parseInt(priceStr.replace(/[^\d]/g, '')) || 0;
+                            }
+                            if (price <= 0) {
+                                price = 100; // Минимальная цена
+                            }
+                            
+                            // Обработка категории
+                            let category = (productData.category || 'Бытовая химия').trim();
+                            if (!category) category = 'Бытовая химия';
+                            
+                            // Обработка статуса
+                            let status = 'out_of_stock';
+                            const inStockValue = productData.in_stock || '';
+                            const preOrderValue = productData.pre_order || '';
+                            
+                            if (inStockValue.toString().toLowerCase().includes('да') || 
+                                inStockValue.toString().toLowerCase().includes('yes')) {
+                                status = 'in_stock';
+                            } else if (preOrderValue.toString().toLowerCase().includes('да') ||
+                                     preOrderValue.toString().toLowerCase().includes('yes')) {
+                                status = 'pre_order';
+                            }
+                            
+                            // Обработка изображения
+                            let image = productData.image || 
+                                        'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                            
+                            // Очистка описания от спецсимволов
+                            let description = productData.description || productData.name || '';
+                            description = description.replace(/[^\x00-\x7F\x80-\xFF\s.,!?;:()-]/g, ' ').substring(0, 500);
+                            
+                            // Создаем объект товара для магазина
+                            const newProduct = {
+                                id: productId,
+                                name: productData.name.trim(),
+                                category: category,
+                                price: price,
+                                oldPrice: null,
+                                quantity: status === 'in_stock' ? 10 : 0,
+                                status: status,
+                                description: description || 'Описание товара',
+                                image: image.trim()
+                            };
+                            
+                            console.log('Создан товар:', newProduct.name, 'Цена:', newProduct.price);
+                            
+                            // Проверяем существующий товар по названию и категории
+                            const existingIndex = products.findIndex(p => 
+                                p.name.toLowerCase() === newProduct.name.toLowerCase() &&
+                                p.category.toLowerCase() === newProduct.category.toLowerCase()
+                            );
+                            
+                            if (existingIndex !== -1) {
+                                products[existingIndex] = newProduct;
+                                updatedCount++;
+                                console.log('Обновлен товар:', newProduct.name);
+                            } else {
+                                products.push(newProduct);
+                                importedCount++;
+                                console.log('Добавлен товар:', newProduct.name);
+                            }
+                            
+                        } catch (error) {
+                            console.error('Ошибка обработки строки', i+1, error);
+                            errorCount++;
+                        }
                     }
                     
-                    // Ищем существующий товар по названию
-                    const existingIndex = products.findIndex(p => 
-                        p.name.toLowerCase() === newProduct.name.toLowerCase()
-                    );
+                    // Сохраняем товары
+                    localStorage.setItem('products', JSON.stringify(products));
                     
-                    if (existingIndex !== -1) {
-                        products[existingIndex] = newProduct;
-                        updatedCount++;
-                    } else {
-                        products.push(newProduct);
-                        importedCount++;
-                    }
+                    // Обновляем отображение
+                    filteredProducts = [...products];
+                    loadProducts();
+                    updateCategoryFilter();
+                    
+                    // Показываем статистику
+                    showImportStats(importedCount, updatedCount, errorCount);
+                    
+                    // Обновляем количество товаров в магазине
+                    showNotification(`✅ Импорт завершен! Добавлено: ${importedCount}, Обновлено: ${updatedCount}`);
                     
                 } catch (error) {
-                    console.error('Ошибка обработки строки', i+1, error);
-                    errorCount++;
+                    console.error('Ошибка импорта CSV:', error);
+                    showNotification('❌ Ошибка при импорте CSV файла: ' + error.message);
                 }
-            }
+            };
             
-            // Сохраняем и обновляем
-            localStorage.setItem('products', JSON.stringify(products));
-            filteredProducts = [...products];
-            loadProducts();
-            updateCategoryFilter();
-            
-            // Показываем статистику
-            showImportStats(importedCount, updatedCount, errorCount);
-            
-        } catch (error) {
-            console.error('Ошибка импорта CSV:', error);
-            showNotification('❌ Ошибка при импорте CSV файла');
-        }
-    };
-    
-    reader.readAsText(file, 'UTF-8');
-}
-
-        // Вспомогательная функция для парсинга строки CSV с учетом кавычек
-        function parseCSVLine(line, delimiter) {
-            const values = [];
-            let currentValue = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                const nextChar = line[i + 1];
-                
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        // Экранированная кавычка
-                        currentValue += '"';
-                        i++; // Пропускаем следующую кавычку
-                    } else {
-                        // Начало/конец кавычек
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === delimiter && !inQuotes) {
-                    values.push(currentValue.trim());
-                    currentValue = '';
-                } else {
-                    currentValue += char;
-                }
-            }
-            
-            // Добавляем последнее значение
-            values.push(currentValue.trim());
-            return values;
-        }
-
-        function importProducts(file) {
-            if (!file) return;
-
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            
-            if (fileExtension === 'csv') {
-                importCSV(file);
-            } else if (fileExtension === 'xlsx') {
-                importExcel(file);
-            } else {
-                showNotification('❌ Поддерживаются только CSV и XLSX файлы');
-            }
+            reader.readAsText(file, 'UTF-8');
         }
 
         function showImportStats(imported, updated, errors, source = 'файла') {
@@ -2805,6 +2816,20 @@
             if (errors > 0) message += `, Ошибок: ${errors}`;
             
             showNotification(message);
+        }
+
+        function importProducts(file) {
+            if (!file) return;
+
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExtension === 'csv') {
+                importCSV(file);
+            } else if (fileExtension === 'xlsx') {
+                importExcel(file);
+            } else {
+                showNotification('❌ Поддерживаются только CSV и XLSX файлы');
+            }
         }
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -2908,6 +2933,7 @@
 
             // Загружаем данные
             loadCategories();
+            filteredProducts = [...products];
             loadProducts();
             updateCategoryFilter();
             updateCartCount();
@@ -2916,7 +2942,7 @@
             if (products.length === 0) {
                 const testProducts = [
                     {
-                        id: 100,
+                        id: 1001,
                         name: 'FAIRY banane - 5 литров',
                         category: 'Бытовая химия',
                         price: 800,
@@ -2927,7 +2953,7 @@
                         image: 'https://via.placeholder.com/300x200/667eea/ffffff?text=FAIRY'
                     },
                     {
-                        id: 101,
+                        id: 1002,
                         name: 'Комплект постельного белья Люкс',
                         category: 'Постельное белье',
                         price: 2500,
@@ -2945,6 +2971,8 @@
                 loadProducts();
                 updateCategoryFilter();
             }
+            
+            console.log('Магазин загружен. Товаров:', products.length);
         });
     </script>
 </body>
