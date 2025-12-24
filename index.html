@@ -2547,255 +2547,186 @@
         }
 
         function importCSV(file) {
-            const reader = new FileReader();
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            let csvData = e.target.result;
             
-            reader.onload = function(e) {
-                try {
-                    // Удаляем BOM символ (﻿) если он есть в начале файла
-                    let csvData = e.target.result;
-                    if (csvData.charCodeAt(0) === 0xFEFF) {
-                        csvData = csvData.substring(1);
-                    }
-                    
-                    // Определяем разделитель
-                    let delimiter = ';';
-                    
-                    // Проверяем, какой разделитель чаще встречается в первой строке
-                    const firstLine = csvData.split('\n')[0];
-                    const semicolonCount = (firstLine.match(/;/g) || []).length;
-                    const commaCount = (firstLine.match(/,/g) || []).length;
-                    const tabCount = (firstLine.match(/\t/g) || []).length;
-                    
-                    // Выбираем самый частый разделитель
-                    if (commaCount > semicolonCount && commaCount > tabCount) {
-                        delimiter = ',';
-                    } else if (tabCount > semicolonCount && tabCount > commaCount) {
-                        delimiter = '\t';
-                    }
-                    
-                    console.log('Определен разделитель:', delimiter === ';' ? 'точка с запятой' : 
+            // Удаляем BOM символ (﻿) если он есть в начале файла
+            if (csvData.charCodeAt(0) === 0xFEFF) {
+                csvData = csvData.substring(1);
+            }
+            
+            // Убираем все лишние символы вроде ❤️ ✅ 🧴
+            csvData = csvData.replace(/[^\x00-\x7F\x80-\xFF\n;,"]/g, '');
+            
+            // Определяем разделитель по первой строке
+            const firstLine = csvData.split('\n')[0];
+            const semicolonCount = (firstLine.match(/;/g) || []).length;
+            const commaCount = (firstLine.match(/,/g) || []).length;
+            const tabCount = (firstLine.match(/\t/g) || []).length;
+            
+            let delimiter = ';';
+            if (commaCount > semicolonCount && commaCount > tabCount) {
+                delimiter = ',';
+            } else if (tabCount > semicolonCount && tabCount > commaCount) {
+                delimiter = '\t';
+            }
+            
+            console.log('Определен разделитель:', delimiter === ';' ? 'точка с запятой' : 
                                                    delimiter === ',' ? 'запятая' : 'табуляция');
+            
+            const lines = csvData.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) {
+                showNotification('❌ Файл пуст');
+                return;
+            }
+            
+            // Берем заголовки из первой строки
+            const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+            console.log('Заголовки:', headers);
+            
+            let importedCount = 0;
+            let updatedCount = 0;
+            let errorCount = 0;
+            
+            // Пропускаем заголовок (первую строку)
+            for (let i = 1; i < lines.length; i++) {
+                try {
+                    const line = lines[i].trim();
+                    if (line === '') continue;
                     
-                    const lines = csvData.split('\n').filter(line => line.trim() !== '');
-                    if (lines.length === 0) {
-                        showNotification('❌ Файл пуст');
-                        return;
-                    }
+                    // Простой парсинг строки
+                    const values = [];
+                    let currentValue = '';
+                    let inQuotes = false;
                     
-                    const headers = lines[0].split(delimiter).map(h => h.trim());
-                    console.log('Заголовки:', headers);
-                    
-                    let importedCount = 0;
-                    let updatedCount = 0;
-                    let errorCount = 0;
-                    let firstErrorRow = null;
-                    
-                    // Пропускаем заголовок (первую строку)
-                    for (let i = 1; i < lines.length; i++) {
-                        try {
-                            const line = lines[i];
-                            // Пропускаем пустые строки
-                            if (line.trim() === '') {
-                                continue;
-                            }
-                            
-                            // Разделяем с учетом кавычек
-                            const values = parseCSVLine(line, delimiter);
-                            
-                            if (values.length < headers.length) {
-                                // Пробуем простое разделение как запасной вариант
-                                const simpleValues = line.split(delimiter).map(v => v.trim());
-                                if (simpleValues.length >= headers.length) {
-                                    values.length = 0;
-                                    simpleValues.forEach(v => values.push(v));
-                                }
-                            }
-                            
-                            if (values.length < headers.length) {
-                                if (!firstErrorRow) {
-                                    firstErrorRow = { line: i+1, content: line.substring(0, 100) + '...' };
-                                    console.log('Ошибка в строке', i+1, ':', line);
-                                    console.log('Получено значений:', values.length, 'Ожидалось:', headers.length);
-                                }
-                                errorCount++;
-                                continue;
-                            }
-                            
-                            // Создаем объект товара
-                            const productData = {};
-                            headers.forEach((header, index) => {
-                                let value = values[index] || '';
-                                // Очищаем значение от кавычек
-                                if (value.startsWith('"') && value.endsWith('"')) {
-                                    value = value.substring(1, value.length - 1);
-                                }
-                                // Заменяем несколько пробелов на один
-                                value = value.replace(/\s+/g, ' ').trim();
-                                productData[header] = value;
-                            });
-                            
-                            // Пропускаем пустые строки
-                            if (!productData['Название товара'] || productData['Название товара'] === '' ||
-                                productData['Название товара'] === '""') {
-                                continue;
-                            }
-                            
-                            // Определяем ID товара
-                            let productId;
-                            const idField = productData['ID товара'] || productData['ID'] || productData['id'] || productData['Артикул'];
-                            if (idField && idField.toString().trim() !== '' && idField !== '""') {
-                                productId = parseInt(idField.toString().replace(/[^\d]/g, '')) || Date.now() + i;
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        
+                        if (char === '"') {
+                            if (inQuotes && line[j + 1] === '"') {
+                                currentValue += '"';
+                                j++;
                             } else {
-                                productId = Date.now() + i;
+                                inQuotes = !inQuotes;
                             }
-                            
-                            // Определяем цену - ищем цену в разных полях
-                            let price = 0;
-                            const priceFields = [
-                                productData['Цена продажи'], 
-                                productData['Цена'], 
-                                productData['price'],
-                                productData['Цена продажи;;'],
-                                productData['Цена.1']
-                            ];
-                            
-                            for (const priceField of priceFields) {
-                                if (priceField && priceField.toString().trim() !== '' && priceField !== '""') {
-                                    const priceStr = priceField.toString()
-                                        .replace(',', '.')
-                                        .replace(/[^\d.]/g, '');
-                                    price = parseFloat(priceStr);
-                                    if (!isNaN(price) && price > 0) {
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            // Если цена не найдена, пробуем цену закупки
-                            if (isNaN(price) || price === 0) {
-                                const purchasePrice = productData['Цена закупки'] || productData['Цена закупки;;'];
-                                if (purchasePrice && purchasePrice.toString().trim() !== '' && purchasePrice !== '""') {
-                                    price = parseFloat(purchasePrice.toString()
-                                        .replace(',', '.')
-                                        .replace(/[^\d.]/g, '')) * 1.2; // Наценка 20%
-                                }
-                            }
-                            
-                            // Определяем наличие
-                            const inStock = productData['В наличии'] === 'да' || 
-                                           productData['В наличии;;'] === 'да' ||
-                                           productData['Наличие'] === 'да';
-                            const preOrder = productData['Под заказ'] === 'да';
-                            
-                            let status = 'out_of_stock';
-                            if (inStock) {
-                                status = 'in_stock';
-                            } else if (preOrder) {
-                                status = 'pre_order';
-                            }
-                            
-                            // Определяем категорию - ищем в разных полях
-                            let category = 'Бытовая химия';
-                            const categoryFields = [
-                                productData['Категория.1'],
-                                productData['Категория'],
-                                productData['Категория;;'],
-                                productData['category'],
-                                productData['Категория товара']
-                            ];
-                            
-                            for (const catField of categoryFields) {
-                                if (catField && catField.toString().trim() !== '' && catField !== '""') {
-                                    category = catField.toString().trim();
-                                    break;
-                                }
-                            }
-                            
-                            // Определяем описание
-                            let description = productData['Описание'] || 
-                                             productData['Описание;;'] || 
-                                             productData['description'] ||
-                                             productData['Название товара'];
-                            description = description.replace(/\n+/g, ' ').trim();
-                            
-                            // Определяем изображение
-                            let image = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
-                            const imageFields = [
-                                productData['URL ссылка на изображение'],
-                                productData['URL ссылка на изображение;;'],
-                                productData['Изображение'],
-                                productData['image'],
-                                productData['Ссылка на изображение']
-                            ];
-                            
-                            for (const imgField of imageFields) {
-                                if (imgField && imgField.toString().trim() !== '' && imgField !== '""') {
-                                    const imgUrl = imgField.toString().trim();
-                                    if (imgUrl.startsWith('http')) {
-                                        image = imgUrl;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            const newProduct = {
-                                id: productId,
-                                name: productData['Название товара'],
-                                category: category,
-                                price: Math.round(price) || 100, // Минимум 100 руб
-                                oldPrice: null,
-                                quantity: inStock ? 10 : 0,
-                                status: status,
-                                description: description,
-                                image: image,
-                                brand: productData['Бренд'] || '',
-                                purchasePrice: productData['Цена закупки'] ? 
-                                    parseFloat(productData['Цена закупки'].toString().replace(',', '.')) : null
-                            };
-                            
-                            if (newProduct.price <= 0) {
-                                errorCount++;
-                                continue;
-                            }
-                            
-                            // Проверяем, существует ли уже товар с таким названием
-                            const existingIndex = products.findIndex(p => 
-                                p.name.toLowerCase() === newProduct.name.toLowerCase()
-                            );
-                            
-                            if (existingIndex !== -1) {
-                                products[existingIndex] = newProduct;
-                                updatedCount++;
-                            } else {
-                                products.push(newProduct);
-                                importedCount++;
-                            }
-                            
-                        } catch (error) {
-                            console.error('Ошибка обработки строки', i+1, error);
-                            errorCount++;
+                        } else if (char === delimiter && !inQuotes) {
+                            values.push(currentValue.trim());
+                            currentValue = '';
+                        } else {
+                            currentValue += char;
                         }
                     }
+                    values.push(currentValue.trim());
                     
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    loadProducts();
-                    updateCategoryFilter();
+                    // Создаем объект товара
+                    const product = {};
+                    headers.forEach((header, index) => {
+                        let value = values[index] || '';
+                        // Убираем кавычки если есть
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.substring(1, value.length - 1);
+                        }
+                        product[header] = value;
+                    });
                     
-                    if (firstErrorRow) {
-                        console.warn('Первая ошибка в строке', firstErrorRow.line, ':', firstErrorRow.content);
+                    // Пропускаем если нет названия
+                    if (!product['Название товара'] || !product['Название товара'].trim()) {
+                        continue;
                     }
                     
-                    showImportStats(importedCount, updatedCount, errorCount);
+                    // Определяем ID
+                    let productId = Date.now() + i;
+                    if (product['ID товара'] && product['ID товара'].trim()) {
+                        const idNum = parseInt(product['ID товара'].replace(/[^\d]/g, ''));
+                        if (!isNaN(idNum)) productId = idNum;
+                    }
+                    
+                    // Определяем цену
+                    let price = 0;
+                    const priceValue = product['Цена продажи'] || product['Цена'];
+                    if (priceValue) {
+                        price = parseInt(priceValue.toString().replace(/[^\d]/g, '')) || 0;
+                    }
+                    
+                    // Определяем категорию
+                    let category = product['Категория'] || 'Бытовая химия';
+                    
+                    // Определяем наличие
+                    let status = 'out_of_stock';
+                    const inStock = product['В наличии'] === 'да' || product['В наличии'] === 'Да' || product['В наличии'] === 'ДА';
+                    const preOrder = product['Под заказ'] === 'да' || product['Под заказ'] === 'Да';
+                    
+                    if (inStock) {
+                        status = 'in_stock';
+                    } else if (preOrder) {
+                        status = 'pre_order';
+                    }
+                    
+                    // Определяем изображение
+                    let image = product['URL ссылка на изображение'] || 
+                               'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                    
+                    // Убираем все emoji из описания
+                    let description = product['Описание'] || product['Название товара'];
+                    description = description.replace(/[^\x00-\x7F\x80-\xFF\s.,!?;:()-]/g, ' ');
+                    
+                    // Создаем объект для магазина
+                    const newProduct = {
+                        id: productId,
+                        name: product['Название товара'].trim(),
+                        category: category.trim(),
+                        price: price || 100, // минимум 100 руб
+                        oldPrice: null,
+                        quantity: inStock ? 10 : 0,
+                        status: status,
+                        description: description.substring(0, 500), // ограничиваем длину
+                        image: image.trim()
+                    };
+                    
+                    if (newProduct.price <= 0) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Ищем существующий товар по названию
+                    const existingIndex = products.findIndex(p => 
+                        p.name.toLowerCase() === newProduct.name.toLowerCase()
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        products[existingIndex] = newProduct;
+                        updatedCount++;
+                    } else {
+                        products.push(newProduct);
+                        importedCount++;
+                    }
                     
                 } catch (error) {
-                    console.error('Ошибка импорта CSV:', error);
-                    showNotification('❌ Ошибка при импорте CSV файла');
+                    console.error('Ошибка обработки строки', i+1, error);
+                    errorCount++;
                 }
-            };
+            }
             
-            reader.readAsText(file, 'UTF-8');
+            // Сохраняем и обновляем
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            loadProducts();
+            updateCategoryFilter();
+            
+            // Показываем статистику
+            showImportStats(importedCount, updatedCount, errorCount);
+            
+        } catch (error) {
+            console.error('Ошибка импорта CSV:', error);
+            showNotification('❌ Ошибка при импорте CSV файла');
         }
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+}
 
         // Вспомогательная функция для парсинга строки CSV с учетом кавычек
         function parseCSVLine(line, delimiter) {
@@ -3018,4 +2949,3 @@
     </script>
 </body>
 </html>
-
