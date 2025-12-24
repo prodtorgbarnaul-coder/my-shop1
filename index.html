@@ -1416,108 +1416,182 @@
             logoText: 'ДЛЯ СВОИХ'
         };
 
-        // ==================== ЗАГРУЗКА ИЗ GOOGLE SHEETS ====================
-        async function loadProductsFromGoogleSheets() {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'loading';
-            loadingDiv.innerHTML = '<p>Загрузка товаров из Google Sheets...</p>';
-            document.getElementById('productsGrid').appendChild(loadingDiv);
-            
+       // ==================== ЗАГРУЗКА ИЗ GOOGLE SHEETS ====================
+async function loadProductsFromGoogleSheets() {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading';
+    loadingDiv.innerHTML = '<p>Загрузка товаров из Google Sheets...</p>';
+    document.getElementById('productsGrid').appendChild(loadingDiv);
+    
+    try {
+        // ВАЖНО: Сначала проверьте доступ к таблице!
+        // 1. Откройте https://docs.google.com/spreadsheets/d/1udzmDOhQVIUf86IM2GXUFfYm_oOOTlGl6doZdImPr-s/edit
+        // 2. Нажмите "Настройки доступа" (синяя кнопка)
+        // 3. Установите: "Доступ для всех, у кого есть ссылка" и "Могут просматривать"
+        
+        // Способ 1: Используем экспорт в CSV (работает без API ключа)
+        const sheetId = '1udzmDOhQVIUf86IM2GXUFfYm_oOOTlGl6doZdImPr-s';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+        
+        console.log('Загружаем из:', csvUrl);
+        
+        const response = await fetch(csvUrl);
+        
+        if (!response.ok) {
+            // Если не работает CSV, пробуем другой способ
+            throw new Error(`Не удалось загрузить CSV: ${response.status}`);
+        }
+        
+        const csvText = await response.text();
+        console.log('Получено символов:', csvText.length);
+        
+        // Парсим CSV
+        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        
+        if (lines.length < 2) {
+            throw new Error('Таблица пустая');
+        }
+        
+        // Определяем разделитель (точка с запятой или запятая)
+        const firstLine = lines[0];
+        let delimiter = ';';
+        if (firstLine.includes(',') && !firstLine.includes(';')) {
+            delimiter = ',';
+        }
+        
+        console.log('Используем разделитель:', delimiter);
+        
+        // Заголовки
+        const headers = firstLine.split(delimiter).map(h => 
+            h.trim().replace(/^["']|["']$/g, '')
+        );
+        
+        console.log('Заголовки:', headers);
+        
+        const newProducts = [];
+        
+        // Обрабатываем каждую строку
+        for (let i = 1; i < lines.length; i++) {
             try {
-                // Формируем URL для Google Sheets API
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_API_KEY}`;
+                const line = lines[i];
+                const values = line.split(delimiter).map(v => 
+                    v.trim().replace(/^["']|["']$/g, '')
+                );
                 
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (!data.values || data.values.length === 0) {
-                    throw new Error('Таблица пустая или нет данных');
-                }
-                
-                // Преобразуем данные
-                const headers = data.values[0];
-                const rows = data.values.slice(1);
-                
-                const newProducts = rows.map((row, index) => {
-                    const product = {};
-                    headers.forEach((header, i) => {
-                        product[header] = row[i] || '';
-                    });
-                    
-                    // Обработка статуса
-                    let status = 'out_of_stock';
-                    const inStock = product['В наличии'] || '';
-                    const preOrder = product['Под заказ'] || '';
-                    
-                    if (inStock.toString().toLowerCase().includes('да')) {
-                        status = 'in_stock';
-                    } else if (preOrder.toString().toLowerCase().includes('да')) {
-                        status = 'pre_order';
-                    }
-                    
-                    // Обработка цены
-                    let price = 0;
-                    const priceValue = product['Цена продажи'] || product['Цена'] || '';
-                    if (priceValue) {
-                        price = parseInt(priceValue.toString().replace(/[^\d]/g, '')) || 0;
-                    }
-                    
-                    // Обработка ID
-                    let productId;
-                    if (product['ID товара']) {
-                        const idStr = product['ID товара'].toString();
-                        if (idStr.startsWith('BH')) {
-                            const idNum = parseInt(idStr.replace(/\D/g, ''));
-                            productId = idNum || Date.now() + index;
-                        } else {
-                            productId = parseInt(idStr) || Date.now() + index;
-                        }
-                    } else {
-                        productId = Date.now() + index;
-                    }
-                    
-                    return {
-                        id: productId,
-                        name: (product['Название товара'] || 'Товар без названия').toString(),
-                        category: (product['Категория'] || 'Бытовая химия').toString(),
-                        price: price || 100,
-                        oldPrice: null,
-                        quantity: status === 'in_stock' ? 10 : 0,
-                        status: status,
-                        description: (product['Описание'] || '').toString().substring(0, 500),
-                        image: (product['URL ссылка на изображение'] || 
-                               'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения').toString()
-                    };
+                // Создаем объект с данными
+                const productData = {};
+                headers.forEach((header, index) => {
+                    productData[header] = values[index] || '';
                 });
                 
-                // Сохраняем только если есть товары
-                if (newProducts.length > 0) {
-                    products = newProducts;
-                    localStorage.setItem('products', JSON.stringify(products));
-                    filteredProducts = [...products];
-                    
-                    showNotification(`✅ Загружено ${products.length} товаров из Google Sheets`);
+                console.log(`Товар ${i}:`, productData['Название товара']);
+                
+                // Определяем статус
+                let status = 'out_of_stock';
+                const inStock = productData['В наличии'] || '';
+                const preOrder = productData['Под заказ'] || '';
+                
+                if (inStock.toString().toLowerCase().includes('да') || 
+                    inStock.toString().toLowerCase().includes('yes')) {
+                    status = 'in_stock';
+                } else if (preOrder.toString().toLowerCase().includes('да') ||
+                          preOrder.toString().toLowerCase().includes('yes')) {
+                    status = 'pre_order';
                 }
                 
-            } catch (error) {
-                console.error('Ошибка загрузки из Google Sheets:', error);
-                showNotification(`❌ Ошибка загрузки: ${error.message}`);
-                
-                // Используем локальные данные если есть
-                if (products.length === 0) {
-                    addTestProducts();
+                // Определяем цену
+                let price = 0;
+                const priceValue = productData['Цена продажи'] || productData['Цена'] || '';
+                if (priceValue) {
+                    price = parseInt(priceValue.toString().replace(/[^\d]/g, '')) || 0;
                 }
+                if (price <= 0) {
+                    price = 100; // Минимальная цена
+                }
+                
+                // Определяем ID
+                let productId;
+                if (productData['ID товара']) {
+                    const idStr = productData['ID товара'].toString();
+                    if (idStr.startsWith('BH')) {
+                        const idNum = parseInt(idStr.replace(/\D/g, ''));
+                        productId = idNum || Date.now() + i;
+                    } else {
+                        productId = parseInt(idStr) || Date.now() + i;
+                    }
+                } else {
+                    productId = Date.now() + i;
+                }
+                
+                // Определяем изображение
+                let imageUrl = productData['URL ссылка на изображение'] || 
+                              productData['URL ссылка'] || 
+                              'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                
+                // Если ссылка битая, используем заглушку
+                if (!imageUrl.startsWith('http')) {
+                    imageUrl = 'https://via.placeholder.com/300x200/ecf0f1/7f8c8d?text=Нет+изображения';
+                }
+                
+                // Создаем объект товара
+                const product = {
+                    id: productId,
+                    name: (productData['Название товара'] || 
+                          productData['Название'] || 
+                          `Товар ${i}`).toString().trim(),
+                    category: (productData['Категория'] || 'Бытовая химия').toString().trim(),
+                    price: price,
+                    oldPrice: null,
+                    quantity: status === 'in_stock' ? 10 : 0,
+                    status: status,
+                    description: (productData['Описание'] || productData['Название товара'] || '').toString().substring(0, 200),
+                    image: imageUrl
+                };
+                
+                // Проверяем, что товар валидный
+                if (product.name && product.name.length > 2) {
+                    newProducts.push(product);
+                }
+                
+            } catch (lineError) {
+                console.error(`Ошибка в строке ${i}:`, lineError);
             }
-            
-            // Обновляем отображение
-            loadProducts();
-            updateCategoryFilter();
         }
+        
+        // Сохраняем товары
+        if (newProducts.length > 0) {
+            products = newProducts;
+            localStorage.setItem('products', JSON.stringify(products));
+            filteredProducts = [...products];
+            
+            console.log('Загружено товаров:', products.length);
+            console.log('Пример товара:', products[0]);
+            
+            showNotification(`✅ Загружено ${products.length} товаров из Google Sheets`);
+        } else {
+            showNotification('❌ Не найдено товаров для загрузки');
+            addTestProducts();
+        }
+        
+    } catch (error) {
+        console.error('Ошибка загрузки из Google Sheets:', error);
+        showNotification(`❌ Ошибка: ${error.message}. Использую локальные данные.`);
+        
+        // Используем локальные данные если есть
+        if (products.length === 0) {
+            addTestProducts();
+        }
+    }
+    
+    // Убираем индикатор загрузки
+    if (loadingDiv.parentNode) {
+        loadingDiv.remove();
+    }
+    
+    // Обновляем отображение
+    loadProducts();
+    updateCategoryFilter();
+}
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function loadCategories() {
@@ -2631,3 +2705,4 @@
     </script>
 </body>
 </html>
+
