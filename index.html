@@ -1414,32 +1414,43 @@
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
         function parseCSVLine(line, delimiter) {
-            const values = [];
-            let currentValue = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                const nextChar = line[i + 1];
-                
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        currentValue += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === delimiter && !inQuotes) {
-                    values.push(currentValue);
-                    currentValue = '';
-                } else {
-                    currentValue += char;
-                }
+    const values = [];
+    let currentValue = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                currentValue += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
             }
-            
+        } else if (char === delimiter && !inQuotes) {
             values.push(currentValue);
-            return values;
+            currentValue = '';
+        } else {
+            currentValue += char;
         }
+    }
+    
+    values.push(currentValue);
+    return values;
+}
+
+// И добавьте эту функцию для очистки описания
+function cleanDescription(text) {
+    if (!text) return '';
+    // Убираем лишние двоеточия и точки с запятой, которые не нужны
+    return text
+        .replace(/([^:]):([^:])/g, '$1 $2')  // Заменяем одиночные двоеточия на пробел
+        .replace(/;/g, ',')  // Заменяем точки с запятой на запятые
+        .replace(/\s+/g, ' ')  // Убираем лишние пробелы
+        .trim();
+}
 
         function cleanCSVValue(value) {
             if (!value) return '';
@@ -2977,3 +2988,4 @@
     </script>
 </body>
 </html>
+
