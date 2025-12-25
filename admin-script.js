@@ -6,6 +6,7 @@ let importData = [];
 
 // ========== ИНИЦИАЛИЗАЦИЯ АДМИНКИ ==========
 function initAdmin() {
+    console.log('🔄 Инициализация админ-панели...');
     loadAdminData();
     updateDashboardStats();
     loadProductsTable();
@@ -16,6 +17,7 @@ function initAdmin() {
 function loadAdminData() {
     // Загружаем товары
     adminProducts = JSON.parse(localStorage.getItem('products')) || [];
+    console.log(`📦 Загружено товаров: ${adminProducts.length}`);
     
     // Загружаем категории
     adminCategories = JSON.parse(localStorage.getItem('categoriesData')) || [
@@ -788,7 +790,6 @@ function resetData() {
 // ========== СИНХРОНИЗАЦИЯ С МАГАЗИНОМ ==========
 function updateShopProducts() {
     // Эта функция обновляет данные в магазине
-    // В реальном приложении здесь может быть событие или обновление через BroadcastChannel
     console.log('✅ Данные товаров обновлены для магазина');
 }
 
@@ -872,12 +873,14 @@ window.exportData = exportData;
 window.saveDesignSettings = saveDesignSettings;
 window.saveSystemSettings = saveSystemSettings;
 window.resetData = resetData;
+
+// === КЛЮЧЕВАЯ ФУНКЦИЯ ДЛЯ ВЫХОДА ИЗ АДМИНКИ ===
 window.logoutAdmin = function() {
-console.log('Выход из админки...');
-localStorage.removeItem('isAdmin');
-localStorage.removeItem('adminLoginTime');
-// Немедленный редирект на страницу входа
-window.location.href = 'login-admin.html';
+    console.log('🔄 Выход из админки...');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminLoginTime');
+    // Немедленный редирект на страницу входа
+    window.location.href = 'login-admin.html';
 };
 
 // Автоматическая инициализация при загрузке
@@ -886,3 +889,5 @@ if (document.readyState === 'loading') {
 } else {
     initAdmin();
 }
+
+console.log('✅ admin-script.js загружен, функция logoutAdmin готова к использованию.');
