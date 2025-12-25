@@ -872,7 +872,6 @@ window.exportData = exportData;
 window.saveDesignSettings = saveDesignSettings;
 window.saveSystemSettings = saveSystemSettings;
 window.resetData = resetData;
-window.logoutAdmin = function() {
     localStorage.removeItem('isAdmin');
     window.location.href = 'login-admin.html';
 };
