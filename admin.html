@@ -957,16 +957,16 @@
     <script src="admin-script.js"></script>
     
     <script>
-        // Простая проверка авторизации
-        document.addEventListener('DOMContentLoaded', function() {
-            const isAdmin = localStorage.getItem('isAdmin');
-            if (!isAdmin) {
-                window.location.href = 'login-admin.html';
-            } else {
-                // Если авторизован, показываем админку
-                initAdmin();
-            }
-        });
+        // ПРОСТАЯ ПРОВЕРКА АВТОРИЗАЦИИ
+document.addEventListener('DOMContentLoaded', function() {
+    const isAdmin = localStorage.getItem('isAdmin');
+    if (!isAdmin) {
+        window.location.href = 'login-admin.html';
+    } else {
+        // Если авторизован, показываем админку
+        initAdmin();
+    }
+});
         
         function logoutAdmin() {
             localStorage.removeItem('isAdmin');
