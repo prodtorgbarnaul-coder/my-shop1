@@ -1,0 +1,109 @@
+{
+  "store": {
+    "name": "PRODTORG",
+    "slogan": "Лучший интернет-магазин с синхронизацией Google Sheets",
+    "description": "Мы предлагаем качественные товары по лучшим ценам с автоматической синхронизацией через Google Таблицы",
+    "logo": "",
+    "favicon": "",
+    "currency": "₽",
+    "currencyPosition": "after",
+    "language": "ru",
+    "timezone": "Asia/Barnaul"
+  },
+  "colors": {
+    "primary": "#007bff",
+    "secondary": "#6c757d",
+    "accent": "#28a745",
+    "background": "#f8f9fa",
+    "text": "#333333",
+    "success": "#28a745",
+    "warning": "#ffc107",
+    "error": "#dc3545",
+    "info": "#17a2b8"
+  },
+  "layout": {
+    "showFeatured": true,
+    "showCategories": true,
+    "showTestimonials": true,
+    "showBlog": true,
+    "showSearch": true,
+    "showCart": true,
+    "showWishlist": true,
+    "productsPerPage": 12,
+    "sidebarPosition": "left"
+  },
+  "contact": {
+    "email": "info@prodtorg.ru",
+    "phone": "+7 (3852) 123-456",
+    "address": "Барнаул, пр. Ленина, 123",
+    "workHours": "Пн-Пт: 9:00-18:00, Сб: 10:00-16:00",
+    "telegram": "https://t.me/prodtorg",
+    "whatsapp": "https://wa.me/79991234567",
+    "vk": "https://vk.com/prodtorg"
+  },
+  "seo": {
+    "title": "PRODTORG - Интернет-магазин",
+    "description": "Купить товары с доставкой по Барнаулу",
+    "keywords": "интернет-магазин, товары, доставка, Барнаул",
+    "ogImage": ""
+  },
+  "features": {
+    "requireLogin": false,
+    "guestCheckout": true,
+    "enableReviews": true,
+    "enableRatings": true,
+    "enableCoupons": true,
+    "enableNewsletter": true,
+    "enableWishlist": true,
+    "enableCompare": true
+  },
+  "shipping": {
+    "enabled": true,
+    "freeShippingThreshold": 3000,
+    "shippingCost": 300,
+    "deliveryDays": "2-5",
+    "pickupPoints": [
+      "Барнаул, пр. Ленина, 123",
+      "Барнаул, ул. Матросова, 45"
+    ]
+  },
+  "payment": {
+    "cashOnDelivery": true,
+    "bankCard": true,
+    "onlinePayment": true,
+    "sberbank": true,
+    "yandexMoney": false,
+    "qiwi": false
+  },
+  "integration": {
+    "googleSheets": {
+      "url": "https://docs.google.com/spreadsheets/d/1udzmDOhQVIUf86IM2GXUFfYm_oOoTlGl6doZdImPr-s/edit",
+      "enabled": true,
+      "autoSync": false,
+      "syncInterval": 3600000,
+      "lastSync": null
+    },
+    "telegram": {
+      "enabled": false,
+      "botToken": "",
+      "chatId": ""
+    }
+  },
+  "notifications": {
+    "newOrder": true,
+    "lowStock": true,
+    "emailNotifications": true,
+    "telegramNotifications": false,
+    "adminEmail": "admin@prodtorg.ru"
+  },
+  "advanced": {
+    "maintenanceMode": false,
+    "debugMode": false,
+    "cacheEnabled": true,
+    "cacheDuration": 3600,
+    "analyticsId": "",
+    "yandexMetrika": "",
+    "customCSS": "",
+    "customJS": ""
+  }
+}
