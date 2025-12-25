@@ -583,3 +583,39 @@ function setupEventListeners() {
 window.changePage = changePage;
 window.updateCartItemQuantity = updateCartItemQuantity;
 window.removeFromCart = removeFromCart;
+// ==================== ЭКСПОРТ ФУНКЦИЙ В ГЛОБАЛЬНУЮ ОБЛАСТЬ ====================
+// ВСЕ функции, которые вызываются из HTML (onclick="..."), должны быть здесь:
+
+window.filterByCategory = filterByCategory;
+window.filterProducts = filterProducts;
+window.searchProducts = searchProducts;
+window.addToCart = addToCart;
+window.openCart = openCart;
+window.closeCart = closeCart;
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.openNotifications = openNotifications;
+window.showProductDetails = showProductDetails;
+window.closeProductModal = closeProductModal;
+window.sortProducts = sortProducts;
+
+// Функции конструктора (если они есть в вашем коде)
+window.editBackground = editBackground;
+window.editHeader = editHeader;
+window.editCategories = editCategories;
+window.editProducts = editProducts;
+window.editOrders = editOrders;
+window.editGiveaway = editGiveaway;
+window.saveDesign = saveDesign;
+window.logout = logout;
+window.toggleConstructor = toggleConstructor;
+
+// Функции корзины
+window.changeQuantity = changeQuantity;
+window.removeFromCart = removeFromCart;
+window.checkout = checkout;
+
+// Для пагинации (если она есть в вашем HTML)
+window.changePage = changePage;
+
+console.log('✅ Все функции экспортированы в window');
