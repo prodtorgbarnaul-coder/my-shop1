@@ -600,43 +600,29 @@
             }, 1000);
         }
         
+        // Проверка учетных данных
         function checkCredentials(username, password) {
-    console.log('🔐 Проверка входа:', username, password);
-    
-    // ВСЕГДА возвращаем true для admin/admin123
-    if (username === 'admin' && password === 'admin123') {
-        console.log('✅ Учетные данные верны');
-        
-        // Обязательно сохраняем в localStorage
-        const credentials = {
-            login: 'admin',
-            password: 'admin123',
-            lastLogin: new Date().toISOString()
-        };
-        
-        localStorage.setItem('adminCredentials', JSON.stringify(credentials));
-        console.log('✅ Учетные данные сохранены в localStorage');
-        
-        return true;
-    }
-    
-    // Также проверяем сохраненные данные
-    try {
-        const saved = localStorage.getItem('adminCredentials');
-        if (saved) {
-            const credentials = JSON.parse(saved);
-            if (username === credentials.login && password === credentials.password) {
-                console.log('✅ Успешная проверка по сохраненным данным');
-                return true;
+            // Получаем сохраненные учетные данные
+            const savedCredentials = JSON.parse(localStorage.getItem('adminCredentials'));
+            
+            if (savedCredentials) {
+                // Проверяем с сохраненными данными
+                return username === savedCredentials.login && password === savedCredentials.password;
+            } else {
+                // Используем учетные данные по умолчанию
+                const defaultCredentials = {
+                    login: 'admin',
+                    password: 'admin123'
+                };
+                
+                // Сохраняем по умолчанию при первом входе
+                if (!localStorage.getItem('adminCredentials')) {
+                    localStorage.setItem('adminCredentials', JSON.stringify(defaultCredentials));
+                }
+                
+                return username === defaultCredentials.login && password === defaultCredentials.password;
             }
         }
-    } catch (error) {
-        console.error('Ошибка при проверке сохраненных данных:', error);
-    }
-    
-    console.log('❌ Неверные учетные данные');
-    return false;
-}
         
         // Показ уведомлений
         function showNotification(message, type = 'info') {
