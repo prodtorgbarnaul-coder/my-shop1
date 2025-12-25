@@ -537,13 +537,10 @@ body {
     background: white;
     box-shadow: -5px 0 20px rgba(0,0,0,0.1);
     z-index: 2000;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
 }
 
 .cart-modal.active {
     display: block;
-    transform: translateX(0);
 }
 
 .cart-modal-content {
