@@ -872,8 +872,12 @@ window.exportData = exportData;
 window.saveDesignSettings = saveDesignSettings;
 window.saveSystemSettings = saveSystemSettings;
 window.resetData = resetData;
-    localStorage.removeItem('isAdmin');
-    window.location.href = 'login-admin.html';
+window.logoutAdmin = function() {
+console.log('Выход из админки...');
+localStorage.removeItem('isAdmin');
+localStorage.removeItem('adminLoginTime');
+// Немедленный редирект на страницу входа
+window.location.href = 'login-admin.html';
 };
 
 // Автоматическая инициализация при загрузке
