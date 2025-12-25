@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в админ-панель | Магазин "Для своих"</title>
+    
+    <!-- Стили -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Специальные стили для страницы входа */
+        :root {
+            --login-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --login-card: rgba(255, 255, 255, 0.95);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--login-bg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Анимированный фон */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        .circle-1 {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            left: -150px;
+            animation-delay: 0s;
+        }
+        
+        .circle-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+        
+        .circle-3 {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            right: 10%;
+            animation-delay: -10s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(20px) rotate(240deg); }
+        }
+        
+        /* Контейнер входа */
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .login-card {
+            background: var(--login-card);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        /* Логотип */
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .login-logo p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        /* Заголовок формы */
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h2 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        /* Форма входа */
+        .login-form {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: #e74c3c;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        /* Кнопка входа */
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Ссылки */
+        .login-links {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .login-links a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+        
+        .login-links a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        /* Уведомления */
+        .login-notification {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .notification-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .notification-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Информационная панель */
+        .info-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-panel h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .info-panel ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-panel li {
+            padding: 5px 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-panel li i {
+            color: #667eea;
+            font-size: 0.8rem;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 15px;
+            }
+            
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            .login-logo h1 {
+                font-size: 2rem;
+            }
+            
+            .login-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .bg-circle {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 25px 15px;
+            }
+            
+            .form-input {
+                padding: 10px 15px 10px 40px;
+                font-size: 0.9rem;
+            }
+            
+            .login-btn {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Тематическая иконка магазина */
+        .store-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Анимированный фон -->
+    <div class="bg-animation">
+        <div class="bg-circle circle-1"></div>
+        <div class="bg-circle circle-2"></div>
+        <div class="bg-circle circle-3"></div>
+    </div>
+    
+    <!-- Основной контейнер -->
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Логотип -->
+            <div class="login-logo">
+                <div class="store-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <h1>ДЛЯ СВОИХ</h1>
+                <p>Закрытый магазин для друзей и близких</p>
+            </div>
+            
+            <!-- Уведомление (показывается при ошибке) -->
+            <div id="notification" class="login-notification">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="notificationText"></span>
+            </div>
+            
+            <!-- Заголовок формы -->
+            <div class="login-header">
+                <h2>Вход в админ-панель</h2>
+                <p>Введите данные администратора для доступа к управлению</p>
+            </div>
+            
+            <!-- Форма входа -->
+            <form id="loginForm" class="login-form" onsubmit="login(event)">
+                <!-- Логин -->
+                <div class="form-group">
+                    <label class="form-label" for="username">
+                        <i class="fas fa-user"></i> Логин
+                    </label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <input type="text" 
+                               id="username" 
+                               class="form-input" 
+                               placeholder="Введите логин администратора"
+                               required
+                               autocomplete="username">
+                    </div>
+                    <div id="usernameError" class="error-message">
+                        Пожалуйста, введите логин
+                    </div>
+                </div>
+                
+                <!-- Пароль -->
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fas fa-lock"></i> Пароль
+                    </label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <input type="password" 
+                               id="password" 
+                               class="form-input" 
+                               placeholder="Введите пароль"
+                               required
+                               autocomplete="current-password">
+                        <button type="button" 
+                                id="togglePassword" 
+                                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c757d; cursor: pointer;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="passwordError" class="error-message">
+                        Пожалуйста, введите пароль
+                    </div>
+                </div>
+                
+                <!-- Кнопка входа -->
+                <button type="submit" class="login-btn" id="loginButton">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span id="loginButtonText">Войти в админ-панель</span>
+                </button>
+                
+                <!-- Индикатор загрузки -->
+                <div id="loadingIndicator" style="display: none; text-align: center; margin-top: 15px;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span style="margin-left: 10px;">Проверка данных...</span>
+                </div>
+            </form>
+            
+            <!-- Информационная панель -->
+            <div class="info-panel">
+                <h4><i class="fas fa-info-circle"></i> Информация для входа</h4>
+                <ul>
+                    <li><i class="fas fa-user-check"></i> Для входа используйте данные администратора</li>
+                    <li><i class="fas fa-shield-alt"></i> Доступ только для авторизованных пользователей</li>
+                    <li><i class="fas fa-store-alt"></i> После входа вы сможете управлять магазином</li>
+                </ul>
+            </div>
+            
+            <!-- Ссылки -->
+            <div class="login-links">
+                <a href="index.html">
+                    <i class="fas fa-arrow-left"></i> Вернуться в магазин
+                </a>
+                <span style="color: #6c757d; margin: 0 10px;">•</span>
+                <a href="#" onclick="showForgotPassword()">
+                    <i class="fas fa-question-circle"></i> Забыли пароль?
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипты -->
+    <script>
+        // Проверяем, авторизован ли уже администратор
+        document.addEventListener('DOMContentLoaded', function() {
+            const isAdmin = localStorage.getItem('isAdmin');
+            if (isAdmin) {
+                window.location.href = 'admin.html';
+            }
+            
+            // Инициализация формы
+            initLoginForm();
+            
+            // Показываем тестовые данные (для разработки)
+            showTestCredentials();
+        });
+        
+        // Инициализация формы входа
+        function initLoginForm() {
+            // Переключение видимости пароля
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+            
+            // Валидация формы
+            const formInputs = document.querySelectorAll('.form-input');
+            formInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('error');
+                        const errorElement = this.parentElement.parentElement.querySelector('.error-message');
+                        if (errorElement) errorElement.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Функция входа
+        function login(event) {
+            event.preventDefault();
+            
+            // Получаем данные формы
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            // Проверяем заполненность полей
+            let hasError = false;
+            
+            if (!username) {
+                document.getElementById('username').classList.add('error');
+                document.getElementById('usernameError').style.display = 'block';
+                hasError = true;
+            }
+            
+            if (!password) {
+                document.getElementById('password').classList.add('error');
+                document.getElementById('passwordError').style.display = 'block';
+                hasError = true;
+            }
+            
+            if (hasError) {
+                showNotification('❌ Заполните все поля формы', 'error');
+                return;
+            }
+            
+            // Показываем индикатор загрузки
+            const loginButton = document.getElementById('loginButton');
+            const loginButtonText = document.getElementById('loginButtonText');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            loginButton.disabled = true;
+            loginButtonText.textContent = 'Проверка...';
+            loadingIndicator.style.display = 'block';
+            
+            // Имитируем задержку проверки
+            setTimeout(() => {
+                // Проверяем учетные данные
+                const isValid = checkCredentials(username, password);
+                
+                if (isValid) {
+                    // Сохраняем статус администратора
+                    localStorage.setItem('isAdmin', 'true');
+                    localStorage.setItem('adminLoginTime', new Date().toISOString());
+                    
+                    // Показываем успешное сообщение
+                    showNotification('✅ Успешный вход! Перенаправление...', 'success');
+                    
+                    // Перенаправляем в админ-панель
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1500);
+                } else {
+                    // Показываем ошибку
+                    showNotification('❌ Неверный логин или пароль', 'error');
+                    
+                    // Возвращаем кнопку в исходное состояние
+                    loginButton.disabled = false;
+                    loginButtonText.textContent = 'Войти в админ-панель';
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        // Проверка учетных данных
+        function checkCredentials(username, password) {
+            // Получаем сохраненные учетные данные
+            const savedCredentials = JSON.parse(localStorage.getItem('adminCredentials'));
+            
+            if (savedCredentials) {
+                // Проверяем с сохраненными данными
+                return username === savedCredentials.login && password === savedCredentials.password;
+            } else {
+                // Используем учетные данные по умолчанию
+                const defaultCredentials = {
+                    login: 'admin',
+                    password: 'admin123'
+                };
+                
+                // Сохраняем по умолчанию при первом входе
+                if (!localStorage.getItem('adminCredentials')) {
+                    localStorage.setItem('adminCredentials', JSON.stringify(defaultCredentials));
+                }
+                
+                return username === defaultCredentials.login && password === defaultCredentials.password;
+            }
+        }
+        
+        // Показ уведомлений
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notification.className = `login-notification notification-${type}`;
+            notificationText.innerHTML = message;
+            notification.style.display = 'block';
+            
+            // Автоматическое скрытие
+            if (type !== 'error') {
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Показать тестовые учетные данные (только в development)
+        function showTestCredentials() {
+            // Проверяем, находимся ли мы на localhost или GitHub Pages
+            const isLocal = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname.includes('github.io');
+            
+            if (isLocal) {
+                const testPanel = document.createElement('div');
+                testPanel.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 12px;
+                    z-index: 1000;
+                    max-width: 300px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                `;
+                
+                // Получаем текущие учетные данные
+                const savedCredentials = JSON.parse(localStorage.getItem('adminCredentials'));
+                const credentials = savedCredentials || { login: 'admin', password: 'admin123' };
+                
+                testPanel.innerHTML = `
+                    <div style="margin-bottom: 10px; font-weight: bold;">
+                        <i class="fas fa-key"></i> Тестовые учетные данные:
+                    </div>
+                    <div><strong>Логин:</strong> ${credentials.login}</div>
+                    <div><strong>Пароль:</strong> ${credentials.password}</div>
+                    <div style="margin-top: 10px; font-size: 11px; opacity: 0.7;">
+                        Эти данные видны только при локальной разработке
+                    </div>
+                `;
+                
+                document.body.appendChild(testPanel);
+            }
+        }
+        
+        // Забыли пароль
+        function showForgotPassword() {
+            const savedCredentials = JSON.parse(localStorage.getItem('adminCredentials'));
+            
+            if (savedCredentials) {
+                alert(`📧 Восстановление доступа:
+                
+                Для сброса пароля обратитесь к разработчику или:
+                
+                1. Очистите данные браузера для этого сайта
+                2. Или используйте стандартные учетные данные:
+                
+                Логин: admin
+                Пароль: admin123
+                
+                После входа вы сможете изменить пароль в настройках админ-панели.`);
+            } else {
+                alert(`🔐 Учетные данные по умолчанию:
+                
+                Логин: admin
+                Пароль: admin123
+                
+                После входа измените пароль в настройках админ-панели.`);
+            }
+        }
+        
+        // Дополнительные функции для удобства
+        function autoFillCredentials() {
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin123';
+            showNotification('⚠️ Данные для входа заполнены автоматически', 'warning');
+        }
+        
+        // Экспорт функций в глобальную область
+        window.login = login;
+        window.showForgotPassword = showForgotPassword;
+        window.autoFillCredentials = autoFillCredentials;
+        
+        // Для разработки: быстрая автозаполнение по двойному клику на логотип
+        document.querySelector('.login-logo').addEventListener('dblclick', autoFillCredentials);
+        
+        // Секретная комбинация клавиш для быстрого входа (Ctrl+Shift+A)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                autoFillCredentials();
+            }
+        });
+    </script>
+</body>
+</html>
