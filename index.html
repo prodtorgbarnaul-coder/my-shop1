@@ -3,223 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин для своих - Главная</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>ProdTorg Barnaul - Интернет-магазин продуктов</title>
+    <meta name="description" content="Свежие продукты с доставкой в Барнауле. Мясо, рыба, молочные продукты, овощи и фрукты.">
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://postimg.cc/zV4wLfQH/favicon.ico">
+    
+    <!-- Мета-теги для соцсетей -->
+    <meta property="og:title" content="ProdTorg Barnaul">
+    <meta property="og:description" content="Свежие продукты с доставкой">
+    <meta property="og:image" content="https://postimg.cc/zV4wLfQH/logo.png">
+    <meta property="og:url" content="https://prod-torg-barnaul.ru">
 </head>
 <body>
-    <!-- Конструктор -->
-    <div class="constructor-toolbar" id="constructorToolbar">
-        <div class="constructor-toggle" onclick="toggleConstructor()">
-            <i class="fas fa-palette"></i>
-        </div>
-        <div id="editButtons" style="display: none;">
-            <button class="edit-btn" onclick="editBackground()">Фон сайта</button>
-            <button class="edit-btn" onclick="editHeader()">Шапка</button>
-            <button class="edit-btn" onclick="editCategories()">Категории</button>
-            <button class="edit-btn" onclick="editProducts()">Товары</button>
-            <button class="edit-btn" onclick="editOrders()">Заказы</button>
-            <button class="edit-btn" onclick="editGiveaway()">Розыгрыш</button>
-            <button class="edit-btn" onclick="saveDesign()">Сохранить</button>
-            <button class="edit-btn" onclick="logout()">Выйти</button>
-        </div>
-    </div>
-
-    <div class="edit-overlay" id="editOverlay"></div>
-
-    <!-- Панель редактирования товаров -->
-    <div class="edit-panel" id="productsPanel">
-        <div class="edit-panel-content" id="productsPanelContent">
-            <!-- Контент будет загружен динамически -->
-        </div>
-        <div class="panel-actions">
-            <button class="btn btn-danger" onclick="closePanel()">Закрыть</button>
-        </div>
-    </div>
-
-    <!-- Модальное окно корзины -->
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">🛒 Корзина</h3>
-                <span class="close" onclick="closeCart()">&times;</span>
-            </div>
-            <div id="cartItems">
-                <!-- Товары в корзине -->
-            </div>
-            <div class="cart-total">
-                Итого: <span id="cartTotal">0</span> ₽
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="checkout()" style="flex: 1;">Оформить заказ</button>
-                <button class="btn btn-outline" onclick="closeCart()">Продолжить покупки</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно профиля -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">👤 Профиль</h3>
-                <span class="close" onclick="closeProfile()">&times;</span>
-            </div>
-            <div id="profileContent">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 15px;">А</div>
-                    <h3>Администратор</h3>
-                    <p style="color: var(--gray);">Администратор магазина</p>
+    <!-- ========== HEADER ========== -->
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <img src="https://postimg.cc/zV4wLfQH/logo.png" alt="ProdTorg Barnaul" class="logo-img">
+                    <div class="logo-text">
+                        <h1>ProdTorg Barnaul</h1>
+                        <p>Свежие продукты с доставкой</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" class="form-control" value="admin@myshop.ru" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Телефон:</label>
-                    <input type="tel" class="form-control" value="+7 (923) 753-36-06" readonly>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно деталей товара -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="productModalTitle">Товар</h3>
-                <span class="close" onclick="closeProductModal()">&times;</span>
-            </div>
-            <div id="productModalContent">
-                <!-- Детали товара -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header>
-        <div class="header-top">
-            <div class="container">
-                <div class="header-contacts">
-                    <i class="fas fa-phone"></i> +7 (923) 753-36-06
-                    <span style="margin: 0 15px">|</span>
-                    <i class="fas fa-envelope"></i> prodtorg.barnaul@gmail.com
-                </div>
-            </div>
-        </div>
-        <div class="header-main">
-            <div class="container">
-                <a href="#" class="logo">ДЛЯ СВОИХ<span>.</span></a>
                 
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Поиск товаров...">
-                    <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
+                <div class="header-contacts">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <span class="contact-label">Звоните нам</span>
+                            <a href="tel:+73852555555" class="contact-value">+7 (3852) 55-55-55</a>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <span class="contact-label">Время работы</span>
+                            <span class="contact-value">9:00 - 21:00</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="header-actions">
-                    <a href="#" class="header-action" onclick="openProfile(); return false;">
-                        <i class="far fa-user"></i>
-                        <span>Профиль</span>
-                    </a>
-                    <a href="#" class="header-action" onclick="openNotifications(); return false;" style="position: relative;">
-                        <i class="far fa-bell"></i>
-                        <span>Уведомления</span>
-                        <div class="notification-count" id="notificationCount">0</div>
-                    </a>
-                    <a href="#" class="header-action" style="position: relative;" onclick="openCart(); return false;">
+                    <button class="btn-login" id="loginBtn">
+                        <i class="fas fa-user"></i>
+                        <span>Войти</span>
+                    </button>
+                    <button class="btn-cart" id="cartToggle">
                         <i class="fas fa-shopping-cart"></i>
-                        <span>Корзина</span>
-                        <div class="cart-count" id="cartCount">0</div>
-                    </a>
-                    <div class="user-info" id="userInfo">
-                        <div class="user-avatar">А</div>
-                        <div class="user-details">
-                            <div class="user-name">Администратор</div>
-                            <div class="user-role">Администратор</div>
-                        </div>
-                        <button class="logout-btn" onclick="logout()" title="Выйти">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </div>
+                        <span class="cart-count">0</span>
+                        <span class="cart-total">0 ₽</span>
+                    </button>
                 </div>
             </div>
+            
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Главная</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-utensils"></i> Мясо и птица</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-fish"></i> Рыба и морепродукты</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-cheese"></i> Молочные продукты</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-carrot"></i> Овощи и фрукты</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-bread-slice"></i> Бакалея</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-truck"></i> Доставка</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-info-circle"></i> О нас</a></li>
+                </ul>
+            </nav>
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- ========== HERO SECTION ========== -->
     <section class="hero">
         <div class="container">
-            <h1>Магазин для своих</h1>
-            <p>Эксклюзивные товары и специальные предложения для нашего круга</p>
-        </div>
-    </section>
-
-    <!-- Categories Section -->
-    <section class="categories-section">
-        <div class="container">
-            <h2 class="section-title">КАТЕГОРИИ ТОВАРОВ</h2>
-            <div class="categories-grid" id="categoriesGrid">
-                <!-- Categories will be loaded by JavaScript -->
+            <div class="hero-content">
+                <h2>Свежие продукты <span class="highlight">прямо с фермы</span></h2>
+                <p>Бесплатная доставка при заказе от 2000 рублей</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" id="catalogBtn">Смотреть каталог</button>
+                    <button class="btn btn-secondary" id="promoBtn">Акции недели</button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="https://postimg.cc/PNc7MYtS/hero-food.jpg" alt="Свежие продукты">
             </div>
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section class="products-section" id="productsSection">
+    <!-- ========== FILTERS ========== -->
+    <section class="filters-section">
+        <div class="container">
+            <div class="filters-wrapper">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Поиск продуктов...">
+                    <button class="btn-search" id="searchBtn">Найти</button>
+                </div>
+                
+                <div class="category-filters">
+                    <button class="category-btn active" data-category="all">Все товары</button>
+                    <button class="category-btn" data-category="meat">Мясо</button>
+                    <button class="category-btn" data-category="fish">Рыба</button>
+                    <button class="category-btn" data-category="dairy">Молочные</button>
+                    <button class="category-btn" data-category="vegetables">Овощи/Фрукты</button>
+                    <button class="category-btn" data-category="grocery">Бакалея</button>
+                </div>
+                
+                <div class="sort-filter">
+                    <select id="sortSelect">
+                        <option value="default">Сортировка</option>
+                        <option value="price-asc">Цена: по возрастанию</option>
+                        <option value="price-desc">Цена: по убыванию</option>
+                        <option value="name-asc">Название: А-Я</option>
+                        <option value="name-desc">Название: Я-А</option>
+                        <option value="popular">Популярные</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PRODUCTS GRID ========== -->
+    <main class="main-content">
         <div class="container">
             <div class="products-header">
-                <h2 class="section-title" style="text-align: left; margin: 0;">ПОПУЛЯРНЫЕ ТОВАРЫ</h2>
-                <div class="filters">
-                    <select class="filter-select" id="categoryFilter" onchange="filterProducts()">
-                        <option value="">Все категории</option>
-                    </select>
-                    <select class="filter-select" id="priceFilter" onchange="filterProducts()">
-                        <option value="">Любая цена</option>
-                        <option value="0-500">До 500 руб.</option>
-                        <option value="500-1000">500-1000 руб.</option>
-                        <option value="1000-5000">1000-5000 руб.</option>
-                        <option value="5000-999999">От 5000 руб.</option>
-                    </select>
-                    <select class="filter-select" id="sortBy" onchange="sortProducts()">
-                        <option value="name">Сортировка</option>
-                        <option value="price_asc">Цена (по возрастанию)</option>
-                        <option value="price_desc">Цена (по убыванию)</option>
-                        <option value="name">По названию</option>
-                    </select>
+                <h2><i class="fas fa-store"></i> Каталог товаров</h2>
+                <div class="products-count">
+                    <span id="productsCount">0</span> товаров
                 </div>
             </div>
+            
             <div class="products-grid" id="productsGrid">
-                <!-- Products will be loaded by JavaScript -->
+                <!-- Товары будут загружаться через JavaScript -->
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Загружаем товары...</p>
+                </div>
+            </div>
+            
+            <div class="pagination" id="pagination">
+                <!-- Пагинация будет генерироваться через JS -->
             </div>
         </div>
-    </section>
+    </main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>О магазине</h3>
-                    <p style="color: #bdc3c7; line-height: 1.6;">
-                        Закрытый магазин для друзей и близких. 
-                        Специальные цены, эксклюзивные товары и регулярные розыгрыши призов.
-                    </p>
+    <!-- ========== CART MODAL ========== -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-modal-content">
+            <div class="cart-header">
+                <h3><i class="fas fa-shopping-cart"></i> Ваша корзина</h3>
+                <button class="close-cart" id="closeCart">&times;</button>
+            </div>
+            
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-basket"></i>
+                    <p>Ваша корзина пуста</p>
+                    <button class="btn btn-primary" id="continueShopping">Продолжить покупки</button>
                 </div>
-                <div class="footer-column">
-                    <h3>Контакты</h3>
+            </div>
+            
+            <div class="cart-footer">
+                <div class="cart-totals">
+                    <div class="total-row">
+                        <span>Товаров:</span>
+                        <span id="cartTotalItems">0 шт.</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Сумма:</span>
+                        <span id="cartTotalPrice">0 ₽</span>
+                    </div>
+                    <div class="total-row total">
+                        <span>Итого:</span>
+                        <span id="cartFinalTotal">0 ₽</span>
+                    </div>
+                </div>
+                
+                <div class="cart-actions">
+                    <button class="btn btn-secondary" id="clearCart">Очистить корзину</button>
+                    <button class="btn btn-primary" id="checkoutBtn">Оформить заказ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== LOGIN MODAL ========== -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-modal-content">
+            <button class="close-login" id="closeLogin">&times;</button>
+            <h3><i class="fas fa-user"></i> Вход в систему</h3>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="guest">Гостевой вход</button>
+                <button class="login-tab" data-tab="admin">Администратор</button>
+            </div>
+            
+            <div class="login-form" id="guestForm">
+                <div class="form-group">
+                    <label for="guestName">Ваше имя</label>
+                    <input type="text" id="guestName" placeholder="Иван Иванов">
+                </div>
+                <div class="form-group">
+                    <label for="guestPhone">Телефон</label>
+                    <input type="tel" id="guestPhone" placeholder="+7 (999) 999-99-99">
+                </div>
+                <button class="btn btn-primary btn-block" id="guestLoginBtn">Продолжить как гость</button>
+            </div>
+            
+            <div class="login-form" id="adminForm" style="display: none;">
+                <div class="form-group">
+                    <label for="adminLogin">Логин</label>
+                    <input type="text" id="adminLogin" placeholder="Введите логин">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Пароль</label>
+                    <input type="password" id="adminPassword" placeholder="Введите пароль">
+                </div>
+                <button class="btn btn-primary btn-block" id="adminLoginBtn">Войти в админку</button>
+                <p class="login-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Для доступа к админке перейдите на <a href="admin.html">страницу администратора</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>ProdTorg Barnaul</h4>
+                    <p>Свежие продукты напрямую от производителей. Качество, проверенное временем.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-vk"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h4>Категории</h4>
                     <ul>
-                        <li><i class="fas fa-phone"></i> +7 (923) 753-36-06</li>
-                        <li><i class="fas fa-envelope"></i> prodtorg.barnaul@gmail.com</li>
-                        <li><i class="fas fa-map-marker-alt"></i> г. Барнаул, ул. Островского, 10</li>
-                        <li><i class="fas fa-clock"></i> Пн-Вс: 9:00-21:00</li>
+                        <li><a href="#">Мясо и птица</a></li>
+                        <li><a href="#">Рыба и морепродукты</a></li>
+                        <li><a href="#">Молочные продукты</a></li>
+                        <li><a href="#">Овощи и фрукты</a></li>
+                        <li><a href="#">Бакалея</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h4>Контакты</h4>
+                    <ul class="contact-list">
+                        <li><i class="fas fa-map-marker-alt"></i> Барнаул, ул. Ленина, 1</li>
+                        <li><i class="fas fa-phone"></i> +7 (3852) 55-55-55</li>
+                        <li><i class="fas fa-envelope"></i> info@prod-torg-barnaul.ru</li>
+                        <li><i class="fas fa-clock"></i> Ежедневно 9:00-21:00</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h4>Информация</h4>
+                    <ul>
+                        <li><a href="#">О компании</a></li>
+                        <li><a href="#">Доставка и оплата</a></li>
+                        <li><a href="#">Возврат товара</a></li>
+                        <li><a href="#">Политика конфиденциальности</a></li>
+                        <li><a href="#">Публичная оферта</a></li>
                     </ul>
                 </div>
             </div>
+            
             <div class="footer-bottom">
-                <p>&copy; 2024 Магазин "Для своих". Все права защищены.</p>
+                <p>&copy; 2024 ProdTorg Barnaul. Все права защищены.</p>
+                <p>Сайт разработан: <a href="https://prod-torg-barnaul.ru" target="_blank">prod-torg-barnaul.ru</a></p>
             </div>
         </div>
     </footer>
 
+    <!-- ========== NOTIFICATION ========== -->
+    <div class="notification" id="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
     <script src="script.js"></script>
+    <!-- Внешние библиотеки (если используются в вашем файле) -->
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    <!-- <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script> -->
 </body>
 </html>
