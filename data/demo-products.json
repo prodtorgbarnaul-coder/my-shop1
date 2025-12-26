@@ -1,102 +1,32 @@
 [
   {
     "id": 1,
-    "name": "Ноутбук HP Pavilion",
-    "category": "Электроника",
-    "price": 65900,
-    "stock": 12,
-    "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853",
-    "description": "Мощный ноутбук для работы и игр",
-    "status": "active"
+    "name": "FAIRY банан - 5 литров",
+    "category": "Бытовая химия",
+    "price": 800,
+    "quantity": 50,
+    "status": "in_stock",
+    "description": "Концентрированное средство для мытья посуды",
+    "image": "https://via.placeholder.com/300x200/667eea/ffffff?text=FAIRY"
   },
   {
     "id": 2,
-    "name": "Смартфон Samsung Galaxy",
-    "category": "Электроника",
-    "price": 44990,
-    "stock": 25,
-    "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
-    "description": "Флагманский смартфон с отличной камерой",
-    "status": "active"
+    "name": "Постельное белье \"Люкс\"",
+    "category": "Постельное белье",
+    "price": 2500,
+    "quantity": 20,
+    "status": "in_stock",
+    "description": "Хлопковое постельное белье премиум-класса",
+    "image": "https://via.placeholder.com/300x200/f093fb/ffffff?text=Белье"
   },
   {
     "id": 3,
-    "name": "Наушники Sony WH-1000XM4",
-    "category": "Аксессуары",
-    "price": 24990,
-    "stock": 8,
-    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-    "description": "Беспроводные наушники с шумоподавлением",
-    "status": "active"
-  },
-  {
-    "id": 4,
-    "name": "Кофемашина De'Longhi",
-    "category": "Бытовая техника",
-    "price": 34990,
-    "stock": 5,
-    "image": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085",
-    "description": "Автоматическая кофемашина для дома",
-    "status": "active"
-  },
-  {
-    "id": 5,
-    "name": "Фитнес-браслет Xiaomi Mi Band",
-    "category": "Спорт",
-    "price": 3490,
-    "stock": 0,
-    "image": "https://images.unsplash.com/photo-1576243345690-4e4b79b63288",
-    "description": "Умный браслет для отслеживания активности",
-    "status": "outofstock"
-  },
-  {
-    "id": 6,
-    "name": "Книга 'JavaScript для профессионалов'",
-    "category": "Книги",
-    "price": 1890,
-    "stock": 42,
-    "image": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
-    "description": "Подробное руководство по JavaScript",
-    "status": "active"
-  },
-  {
-    "id": 7,
-    "name": "Футболка мужская",
-    "category": "Одежда",
-    "price": 1290,
-    "stock": 67,
-    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-    "description": "Хлопковая футболка, размеры M-XXL",
-    "status": "active"
-  },
-  {
-    "id": 8,
-    "name": "Рюкзак городской",
-    "category": "Аксессуары",
-    "price": 4590,
-    "stock": 15,
-    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62",
-    "description": "Стильный рюкзак для ноутбука",
-    "status": "active"
-  },
-  {
-    "id": 9,
-    "name": "Игровая консоль PlayStation 5",
-    "category": "Игры",
-    "price": 54990,
-    "stock": 3,
-    "image": "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3",
-    "description": "Новейшая игровая консоль от Sony",
-    "status": "active"
-  },
-  {
-    "id": 10,
-    "name": "Умные часы Apple Watch",
-    "category": "Электроника",
-    "price": 32990,
-    "stock": 9,
-    "image": "https://images.unsplash.com/photo-1434493650001-5d43a6fea0a5",
-    "description": "Смарт-часы с множеством функций",
-    "status": "active"
+    "name": "Лосось свежий",
+    "category": "Рыба и морепродукты",
+    "price": 1500,
+    "quantity": 15,
+    "status": "in_stock",
+    "description": "Охлажденный норвежский лосось",
+    "image": "https://via.placeholder.com/300x200/4facfe/ffffff?text=Лосось"
   }
 ]
