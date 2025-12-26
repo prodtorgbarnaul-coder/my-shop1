@@ -3,374 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин для своих - Главная</title>
-    
-    <!-- Стили и библиотеки -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Магазин "ДЛЯ СВОИХ" - Товары оптом и в розницу</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Библиотека для Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <style>
-        /* Дополнительные стили для ваших категорий */
-        .category-card small {
-            display: block;
-            margin-top: 5px;
-            opacity: 0.8;
-            font-size: 12px;
-        }
-        
-        .product-card {
-            transition: all 0.3s ease;
-            border: 1px solid var(--border);
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        
-        /* Стили для статусов товаров */
-        .status-in-stock {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-            color: #155724;
-        }
-        
-        .status-out-of-stock {
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-            color: #721c24;
-        }
-        
-        .status-pre-order {
-            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-            color: #856404;
-        }
-        
-        /* Кнопки категорий в фильтрах */
-        .category-badge {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin-left: 8px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
 </head>
 <body>
-    <!-- Конструктор (для админа) -->
-    <div class="constructor-toolbar" id="constructorToolbar">
+    <!-- Конструктор (только для админа) -->
+    <div class="constructor-toolbar" style="display: none;">
         <div class="constructor-toggle" onclick="toggleConstructor()">
-            <i class="fas fa-palette"></i>
+            <i class="fas fa-cog"></i>
         </div>
-        <div id="editButtons" style="display: none;">
-            <button class="edit-btn" onclick="editBackground()">Фон сайта</button>
-            <button class="edit-btn" onclick="editHeader()">Шапка</button>
-            <button class="edit-btn" onclick="editCategories()">Категории</button>
-            <button class="edit-btn" onclick="editProducts()">Товары</button>
-            <button class="edit-btn" onclick="editOrders()">Заказы</button>
-            <button class="edit-btn" onclick="editGiveaway()">Розыгрыш</button>
-            <button class="edit-btn" onclick="saveDesign()">Сохранить</button>
-            <button class="edit-btn" onclick="logout()">Выйти</button>
-        </div>
-    </div>
-
-    <div class="edit-overlay" id="editOverlay"></div>
-
-    <!-- Панель редактирования товаров (для админа) -->
-    <div class="edit-panel" id="productsPanel">
-        <div class="edit-panel-content" id="productsPanelContent"></div>
-        <div class="panel-actions">
-            <button class="btn btn-danger" onclick="closePanel()">Закрыть</button>
-        </div>
-    </div>
-
-    <!-- Модальное окно корзины -->
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">🛒 Корзина</h3>
-                <span class="close" onclick="closeCart()">&times;</span>
-            </div>
-            <div id="cartItems">
-                <!-- Товары загружаются через JavaScript -->
-            </div>
-            <div class="cart-total">
-                Итого: <span id="cartTotal">0</span> ₽
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="checkout()" style="flex: 1;">Оформить заказ</button>
-                <button class="btn btn-outline" onclick="closeCart()">Продолжить покупки</button>
-            </div>
+        <div id="editButtons">
+            <button class="edit-btn" onclick="editStoreName()">
+                <i class="fas fa-store"></i> Название магазина
+            </button>
+            <button class="edit-btn" onclick="editHero()">
+                <i class="fas fa-image"></i> Заголовок
+            </button>
+            <button class="edit-btn" onclick="editCategories()">
+                <i class="fas fa-tags"></i> Категории
+            </button>
+            <button class="edit-btn" onclick="editContacts()">
+                <i class="fas fa-phone"></i> Контакты
+            </button>
+            <a href="admin.html" class="edit-btn" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-cogs"></i> Админ-панель
+            </a>
+            <button class="edit-btn" onclick="logoutAdmin()">
+                <i class="fas fa-sign-out-alt"></i> Выйти
+            </button>
         </div>
     </div>
 
-    <!-- Модальное окно профиля -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">👤 Профиль</h3>
-                <span class="close" onclick="closeProfile()">&times;</span>
-            </div>
-            <div id="profileContent">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 15px;">Г</div>
-                    <h3>Гость</h3>
-                    <p style="color: var(--gray);">Покупатель магазина</p>
-                </div>
-                <div class="form-group">
-                    <label>Телефон для связи:</label>
-                    <input type="tel" class="form-control" value="+7 (923) 753-36-06" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" class="form-control" value="prodtorg.barnaul@gmail.com" readonly>
-                </div>
-                <button class="btn btn-primary" onclick="closeProfile()" style="width: 100%; margin-top: 20px;">
-                    Закрыть
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно деталей товара -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="productModalTitle">Товар</h3>
-                <span class="close" onclick="closeProductModal()">&times;</span>
-            </div>
-            <div id="productModalContent">
-                <!-- Детали загружаются через JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Header сайта -->
+    <!-- Шапка -->
     <header>
         <div class="header-top">
             <div class="container">
-                <div class="header-contacts">
-                    <i class="fas fa-phone"></i> +7 (923) 753-36-06
-                    <span style="margin: 0 15px">|</span>
-                    <i class="fas fa-envelope"></i> prodtorg.barnaul@gmail.com
-                    <span style="margin: 0 15px">|</span>
-                    <i class="fas fa-clock"></i> Пн-Вс: 9:00-21:00
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <div>📞 +7 (923) 753-36-06 | 📧 prodtorg.barnaul@gmail.com</div>
+                    <div>
+                        <a href="login-admin.html" style="color: white; text-decoration: none; margin-left: 15px;">
+                            <i class="fas fa-user-cog"></i> Админ
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
+        
         <div class="header-main">
             <div class="container">
-                <a href="#" class="logo">ДЛЯ СВОИХ<span>.</span></a>
+                <!-- Логотип -->
+                <a href="#" class="logo">ДЛЯ СВОИХ</a>
                 
                 <!-- Поиск -->
                 <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Поиск товаров..." onkeyup="if(event.key === 'Enter') searchProducts()">
-                    <button id="searchBtn" onclick="searchProducts()">
-                        <i class="fas fa-search"></i>
-                    </button>
+                    <input type="text" id="productSearch" placeholder="Поиск товаров...">
+                    <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
                 </div>
                 
                 <!-- Действия пользователя -->
                 <div class="header-actions">
-                    <a href="#" class="header-action" onclick="openProfile(); return false;">
-                        <i class="far fa-user"></i>
-                        <span>Профиль</span>
-                    </a>
-                    <a href="#" class="header-action" onclick="openNotifications(); return false;">
-                        <i class="far fa-bell"></i>
-                        <span>Уведомления</span>
-                        <div class="notification-count" id="notificationCount">0</div>
-                    </a>
-                    <a href="#" class="header-action" style="position: relative;" onclick="openCart(); return false;">
+                    <a href="#" class="header-action" onclick="showCart(); return false;">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Корзина</span>
-                        <div class="cart-count" id="cartCount">0</div>
+                        <span class="cart-count">0</span>
                     </a>
-                    <div class="user-info" id="userInfo">
+                    <a href="#contact" class="header-action">
+                        <i class="fas fa-phone"></i>
+                        <span>Контакты</span>
+                    </a>
+                    <div class="user-info">
                         <div class="user-avatar">Г</div>
                         <div class="user-details">
                             <div class="user-name">Гость</div>
                             <div class="user-role">Покупатель</div>
                         </div>
-                        <button class="logout-btn" onclick="logout()" title="Выйти">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- Герой-секция -->
     <section class="hero">
         <div class="container">
-            <h1>Магазин для своих</h1>
-            <p>Эксклюзивные товары и специальные предложения для нашего круга</p>
-            <div style="margin-top: 30px;">
-                <button class="btn btn-primary" onclick="document.getElementById('productsSection').scrollIntoView({behavior: 'smooth'})">
-                    <i class="fas fa-shopping-basket"></i> Смотреть товары
+            <h1>Магазин "ДЛЯ СВОИХ"</h1>
+            <p>Качественные товары оптом и в розницу. Работаем с 2010 года.</p>
+            <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="document.getElementById('categories').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-shopping-basket"></i> Смотреть каталог
                 </button>
-                <button class="btn btn-outline" onclick="openCart()" style="margin-left: 15px;">
-                    <i class="fas fa-shopping-cart"></i> Перейти в корзину
+                <button class="btn btn-outline" onclick="document.getElementById('contact').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-phone"></i> Связаться с нами
                 </button>
             </div>
         </div>
     </section>
 
-    <!-- Categories Section -->
-    <section class="categories-section">
+    <!-- Категории -->
+    <section class="categories-section" id="categories">
         <div class="container">
-            <h2 class="section-title">НАШИ КАТЕГОРИИ</h2>
-            <p style="text-align: center; color: var(--gray); margin-bottom: 40px;">
-                Выберите интересующую категорию товаров
-            </p>
+            <h2 class="section-title">Категории товаров</h2>
             <div class="categories-grid" id="categoriesGrid">
                 <!-- Категории загружаются через JavaScript -->
             </div>
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section class="products-section" id="productsSection">
+    <!-- Товары -->
+    <section class="products-section" id="products">
         <div class="container">
-            <!-- Заголовок и фильтры -->
             <div class="products-header">
-                <h2 class="section-title" style="text-align: left; margin: 0; flex: 1;">ВСЕ ТОВАРЫ</h2>
-                
-                <!-- Фильтры и сортировка -->
+                <div>
+                    <h2 class="section-title" style="margin-bottom: 0;">Все товары</h2>
+                    <p style="color: var(--gray); margin-top: 5px;">
+                        <span id="productsCount">0</span> товаров доступно
+                    </p>
+                </div>
                 <div class="filters">
-                    <select class="filter-select" id="categoryFilter" onchange="filterProducts()">
+                    <select id="categoryFilter" class="filter-select" onchange="applyFilters()">
                         <option value="">Все категории</option>
-                        <option value="Бытовая химия">Бытовая химия (BH)</option>
-                        <option value="Постельное белье">Постельное белье (PB)</option>
-                        <option value="Рыба и морепродукты">Рыба и морепродукты (RB)</option>
-                        <option value="Мясо и птица">Мясо и птица (MT)</option>
-                        <option value="Кондитерские изделия">Кондитерские изделия (KD)</option>
-                        <option value="Молочные продукты">Молочные продукты (ML)</option>
-                        <option value="Мангальные зоны и мангалы">Мангалы (MM)</option>
+                        <!-- Заполняется через JavaScript -->
                     </select>
-                    
-                    <select class="filter-select" id="priceFilter" onchange="filterProducts()">
-                        <option value="">Любая цена</option>
-                        <option value="0-500">До 500 руб.</option>
-                        <option value="500-1000">500-1000 руб.</option>
-                        <option value="1000-5000">1000-5000 руб.</option>
-                        <option value="5000-999999">От 5000 руб.</option>
+                    <select id="sortFilter" class="filter-select" onchange="applyFilters()">
+                        <option value="">Сортировка</option>
+                        <option value="price_asc">Цена по возрастанию</option>
+                        <option value="price_desc">Цена по убыванию</option>
+                        <option value="name_asc">Название А-Я</option>
+                        <option value="name_desc">Название Я-А</option>
+                        <option value="newest">Сначала новые</option>
                     </select>
-                    
-                    <select class="filter-select" id="sortBy" onchange="sortProducts()">
-                        <option value="name">Сортировка</option>
-                        <option value="price_asc">Цена (по возрастанию)</option>
-                        <option value="price_desc">Цена (по убыванию)</option>
-                        <option value="name">По названию (А-Я)</option>
-                    </select>
-                    
-                    <div style="display: flex; align-items: center; color: var(--gray); font-size: 14px;">
-                        <i class="fas fa-box" style="margin-right: 8px;"></i>
-                        <span id="productsCount">0</span> товаров
-                    </div>
                 </div>
             </div>
             
-            <!-- Сетка товаров -->
             <div class="products-grid" id="productsGrid">
                 <!-- Товары загружаются через JavaScript -->
             </div>
             
-            <!-- Пагинация (если нужно) -->
-            <div id="pagination" style="margin-top: 40px; text-align: center;"></div>
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn btn-outline" onclick="clearFilters()">
+                    <i class="fas fa-redo"></i> Сбросить фильтры
+                </button>
+            </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer>
+    <!-- Контакты -->
+    <footer id="contact">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
-                    <h3>О магазине</h3>
-                    <p style="color: #bdc3c7; line-height: 1.6;">
-                        Закрытый магазин для друзей и близких. 
-                        Специальные цены, эксклюзивные товары и регулярные розыгрыши призов.
+                    <h3>Магазин "ДЛЯ СВОИХ"</h3>
+                    <p style="margin-top: 10px; color: #bdc3c7;">
+                        Качественные товары оптом и в розницу.<br>
+                        Работаем с 2010 года.
                     </p>
-                    <div style="margin-top: 20px;">
-                        <a href="#" style="color: white; margin-right: 15px;"><i class="fab fa-vk"></i></a>
-                        <a href="#" style="color: white; margin-right: 15px;"><i class="fab fa-telegram"></i></a>
-                        <a href="#" style="color: white;"><i class="fab fa-whatsapp"></i></a>
+                    <div style="margin-top: 20px; display: flex; gap: 15px;">
+                        <a href="#" style="color: white; font-size: 20px;">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" style="color: white; font-size: 20px;">
+                            <i class="fab fa-telegram"></i>
+                        </a>
+                        <a href="#" style="color: white; font-size: 20px;">
+                            <i class="fab fa-vk"></i>
+                        </a>
                     </div>
                 </div>
                 
                 <div class="footer-column">
                     <h3>Контакты</h3>
                     <ul>
-                        <li><i class="fas fa-phone"></i> +7 (923) 753-36-06</li>
-                        <li><i class="fas fa-envelope"></i> prodtorg.barnaul@gmail.com</li>
-                        <li><i class="fas fa-map-marker-alt"></i> г. Барнаул, ул. Островского, 10</li>
-                        <li><i class="fas fa-clock"></i> Пн-Вс: 9:00-21:00</li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <span>+7 (923) 753-36-06</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <span>prodtorg.barnaul@gmail.com</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Барнаул, Алтайский край</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-clock"></i>
+                            <span>Пн-Пт: 9:00-18:00</span>
+                        </li>
                     </ul>
                 </div>
                 
                 <div class="footer-column">
-                    <h3>Быстрые ссылки</h3>
+                    <h3>Информация</h3>
                     <ul>
-                        <li><a href="#categoriesGrid" style="color: #bdc3c7;">Категории товаров</a></li>
-                        <li><a href="#productsSection" style="color: #bdc3c7;">Все товары</a></li>
-                        <li><a href="#" onclick="openCart(); return false;" style="color: #bdc3c7;">Корзина</a></li>
-                        <li><a href="#" onclick="openProfile(); return false;" style="color: #bdc3c7;">Профиль</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>Наши категории</h3>
-                    <ul>
-                        <li>🧴 Бытовая химия (BH)</li>
-                        <li>🛏️ Постельное белье (PB)</li>
-                        <li>🐟 Рыба и морепродукты (RB)</li>
-                        <li>🍗 Мясо и птица (MT)</li>
-                        <li>🍰 Кондитерские изделия (KD)</li>
-                        <li>🥛 Молочные продукты (ML)</li>
-                        <li>🔥 Мангалы (MM)</li>
+                        <li><a href="#"><i class="fas fa-shipping-fast"></i> Доставка и оплата</a></li>
+                        <li><a href="#"><i class="fas fa-file-contract"></i> Договор оферты</a></li>
+                        <li><a href="#"><i class="fas fa-shield-alt"></i> Политика конфиденциальности</a></li>
+                        <li><a href="login-admin.html"><i class="fas fa-user-cog"></i> Панель администратора</a></li>
                     </ul>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 Магазин "Для своих". Все права защищены.</p>
-                <p style="font-size: 12px; color: #95a5a6; margin-top: 10px;">
-                    Закрытый клуб покупок. Только для приглашенных участников.
-                </p>
+                <p>© 2024 Магазин "ДЛЯ СВОИХ". Все права защищены.</p>
+                <p style="font-size: 12px; margin-top: 5px;">PRODTORG BARNAUL - качественные товары для своих</p>
             </div>
         </div>
     </footer>
 
-    <!-- Уведомления -->
-    <div id="notification" class="notification" style="display: none;">
-        <div id="notificationText"></div>
+    <!-- Модальные окна -->
+
+    <!-- Модальное окно корзины -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🛒 Корзина покупок</h3>
+                <span class="close" onclick="closeModal('cartModal')">&times;</span>
+            </div>
+            <div id="cartItems">
+                <!-- Содержимое корзины -->
+            </div>
+            <div class="cart-total">
+                Итого: <span id="cartTotal">0 ₽</span>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('cartModal')">
+                    <i class="fas fa-times"></i> Продолжить покупки
+                </button>
+                <button class="btn btn-danger" onclick="clearCart()">
+                    <i class="fas fa-trash"></i> Очистить корзину
+                </button>
+                <button class="btn btn-primary" onclick="checkout()" style="flex: 1;">
+                    <i class="fas fa-check"></i> Оформить заказ
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- Подключение основного скрипта -->
+    <!-- Модальное окно деталей товара -->
+    <div id="productDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📦 Детали товара</h3>
+                <span class="close" onclick="closeModal('productDetailsModal')">&times;</span>
+            </div>
+            <div id="productDetailsContent">
+                <!-- Детали товара -->
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
-    
-    <script>
-        // Функция закрытия панелей (для конструктора)
-        function closePanel() {
-            const panel = document.getElementById('productsPanel');
-            const overlay = document.getElementById('editOverlay');
-            if (panel) panel.style.display = 'none';
-            if (overlay) overlay.style.display = 'none';
-        }
-        
-        // Проверка админки при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            const isAdmin = localStorage.getItem('isAdmin');
-            if (isAdmin) {
-                const toolbar = document.querySelector('.constructor-toolbar');
-                if (toolbar) toolbar.style.display = 'block';
-            }
-        });
-    </script>
 </body>
 </html>
