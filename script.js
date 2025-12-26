@@ -600,3 +600,21 @@ window.saveDesign = saveDesign;
 window.logout = logout;
 
 console.log('✅ Все функции магазина загружены и экспортированы');
+// ============================================
+// ФУНКЦИЯ ВЫХОДА ИЗ АДМИНКИ (ВРЕМЕННОЕ РЕШЕНИЕ)
+// ============================================
+
+function logoutAdmin() {
+    console.log('Выход из админ-панели...');
+    localStorage.removeItem('adminUser');
+    window.location.href = 'index.html';
+}
+
+// Проверяем, если мы на странице админки, добавляем обработчик
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn && window.location.pathname.includes('admin.html')) {
+        logoutBtn.addEventListener('click', logoutAdmin);
+        console.log('Обработчик выхода установлен (временное решение)');
+    }
+});
