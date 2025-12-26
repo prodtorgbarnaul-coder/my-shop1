@@ -231,5 +231,21 @@
             console.log('✅ Страница входа загружена');
         });
     </script>
+<script>
+// ============================================
+// ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ
+// ============================================
+
+// Эта функция будет доступна только на странице login-admin.html
+function testLogoutAdmin() {
+    console.log('Тестовая функция logoutAdmin');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminLoginTime');
+    window.location.href = 'login-admin.html';
+}
+
+// Проверяем в консоли
+console.log('✅ testLogoutAdmin доступна:', typeof testLogoutAdmin);
+</script>
 </body>
 </html>
