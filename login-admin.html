@@ -3,29 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в админ-панель | Магазин "Для своих"</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Вход в админ-панель - ДЛЯ СВОИХ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
     <style>
-        /* Стили страницы входа */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Дополнительные стили для страницы входа */
+        .login-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
         }
         
         .login-container {
             background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            max-width: 450px;
             width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .login-logo {
@@ -35,7 +47,6 @@
         
         .login-logo h1 {
             font-size: 2.5rem;
-            font-weight: 800;
             background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -43,209 +54,227 @@
             margin-bottom: 10px;
         }
         
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
+        .login-logo p {
+            color: var(--gray);
+            font-size: 14px;
         }
         
-        .login-header h2 {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            margin-bottom: 10px;
+        .login-form {
+            margin-bottom: 25px;
         }
         
         .form-group {
             margin-bottom: 20px;
         }
         
-        .form-input {
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+        
+        .input-with-icon input {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid var(--border);
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 16px;
             transition: all 0.3s ease;
         }
         
-        .form-input:focus {
+        .input-with-icon input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
         }
         
-        .login-btn {
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        .login-button {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, var(--primary), #1a3a6b);
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
-        .login-btn:hover {
+        .login-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(44, 90, 160, 0.3);
         }
         
-        .login-links {
+        .login-footer {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid var(--border);
+            color: var(--gray);
+            font-size: 14px;
         }
         
-        .login-links a {
-            color: #667eea;
+        .login-footer a {
+            color: var(--primary);
             text-decoration: none;
-            font-size: 0.9rem;
         }
         
-        .notification {
-            padding: 15px;
-            border-radius: 10px;
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        #loginError {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            text-align: center;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
         
-        .notification-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
-        .notification-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .login-logo h1 {
+                font-size: 2rem;
+            }
+            
+            .form-options {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-logo">
-            <h1>ДЛЯ СВОИХ</h1>
-            <p>Закрытый магазин для друзей и близких</p>
-        </div>
-        
-        <div id="notification" class="notification">
-            <span id="notificationText"></span>
-        </div>
-        
-        <div class="login-header">
-            <h2>Вход в админ-панель</h2>
-            <p>Введите данные администратора</p>
-        </div>
-        
-        <form id="loginForm" onsubmit="return login(event)">
-            <div class="form-group">
-                <input type="text" id="username" class="form-input" placeholder="Логин (admin)" required>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-logo">
+                <h1>🛒 ДЛЯ СВОИХ</h1>
+                <p>Панель администратора</p>
             </div>
             
-            <div class="form-group">
-                <input type="password" id="password" class="form-input" placeholder="Пароль (admin123)" required>
-            </div>
+            <div id="loginError"></div>
             
-            <button type="submit" class="login-btn" id="loginButton">
-                <i class="fas fa-sign-in-alt"></i> Войти в админ-панель
-            </button>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="login" name="login" placeholder="Введите логин" required autofocus>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+                    </div>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span>Запомнить меня</span>
+                    </label>
+                    <a href="#" class="forgot-password" onclick="resetPassword(); return false;">
+                        Забыли пароль?
+                    </a>
+                </div>
+                
+                <button type="submit" class="login-button">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти в панель управления
+                </button>
+            </form>
             
-            <div id="loadingIndicator" style="display: none; text-align: center; margin-top: 15px;">
-                <i class="fas fa-spinner fa-spin"></i> Проверка данных...
+            <div class="login-footer">
+                <p>
+                    <i class="fas fa-shield-alt"></i> Доступ только для авторизованного персонала
+                </p>
+                <p style="margin-top: 10px;">
+                    <a href="index.html" style="display: inline-flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-store"></i> Вернуться в магазин
+                    </a>
+                </p>
+                <p style="margin-top: 20px; font-size: 12px; color: #95a5a6;">
+                    PRODTORG BARNAUL © 2024<br>
+                    Демо-доступ: admin / admin123
+                </p>
             </div>
-        </form>
-        
-        <div class="login-links">
-            <a href="index.html">
-                <i class="fas fa-arrow-left"></i> Вернуться в магазин
-            </a>
         </div>
     </div>
-
+    
+    <script src="login-admin.js"></script>
+    
     <script>
-        // ПРОСТАЯ И НАДЁЖНАЯ ФУНКЦИЯ ВХОДА
-        function login(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            console.log('Попытка входа:', username, password);
-            
-            // ВСЕГДА ПУСКАЕМ admin/admin123
-            if (username === 'admin' && password === 'admin123') {
-                console.log('✅ Успешный вход!');
-                
-                // Сохраняем статус администратора
-                localStorage.setItem('isAdmin', 'true');
-                localStorage.setItem('adminLoginTime', new Date().toISOString());
-                
-                // Сохраняем учётные данные
-                const credentials = { 
-                    login: 'admin', 
-                    password: 'admin123',
-                    lastLogin: new Date().toISOString()
-                };
-                localStorage.setItem('adminCredentials', JSON.stringify(credentials));
-                
-                showNotification('✅ Успешный вход! Перенаправление...', 'success');
-                
-                // Перенаправляем через 1 секунду
-                setTimeout(() => {
-                    window.location.href = 'admin.html';
-                }, 1000);
-                
-                return true;
-            } else {
-                showNotification('❌ Неверный логин или пароль. Используйте: admin / admin123', 'error');
-                return false;
-            }
-        }
-        
-        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
-            
-            notification.className = `notification notification-${type}`;
-            notificationText.textContent = message;
-            notification.style.display = 'block';
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        // Проверяем, если уже авторизован
+        // Дополнительные обработчики
         document.addEventListener('DOMContentLoaded', function() {
-            const isAdmin = localStorage.getItem('isAdmin');
-            if (isAdmin === 'true') {
-                window.location.href = 'admin.html';
-            }
+            // Автофокус на поле логина
+            document.getElementById('login').focus();
             
-            console.log('✅ Страница входа загружена');
+            // Показ/скрытие пароля (опционально)
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.querySelector('.input-with-icon .fa-lock');
+            
+            if (passwordIcon && passwordInput) {
+                // Можно добавить переключатель видимости пароля
+            }
         });
     </script>
-<script>
-// ============================================
-// ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ
-// ============================================
-
-// Эта функция будет доступна только на странице login-admin.html
-function testLogoutAdmin() {
-    console.log('Тестовая функция logoutAdmin');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('adminLoginTime');
-    window.location.href = 'login-admin.html';
-}
-
-// Проверяем в консоли
-console.log('✅ testLogoutAdmin доступна:', typeof testLogoutAdmin);
-</script>
 </body>
 </html>
