@@ -221,7 +221,6 @@ function saveProfileChanges(guestId) {
 // Выход гостя
 function logoutGuest() {
     if (confirm('Вы уверены, что хотите выйти?')) {
-        localStorage.removeItem('isAdmin');
         localStorage.removeItem('currentUser');
         
         // Обновляем информацию в хедере
@@ -268,24 +267,39 @@ function getOrderStatusText(status) {
     }
 }
 
-// Обновление информации о пользователе в хедере
-function updateUserInfo(user) {
-    const userName = document.getElementById('userName');
-    const userRole = document.getElementById('userRole');
-    const userAvatar = document.getElementById('userAvatar');
-    const profileBtn = document.getElementById('profileBtn');
+// Форматирование цены
+function formatPrice(price) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(price).replace('RUB', '₽');
+}
+
+// Показать уведомление
+function showNotification(message, type = 'info') {
+    // Удаляем старые уведомления
+    const oldNotifications = document.querySelectorAll('.notification');
+    oldNotifications.forEach(n => n.remove());
     
-    if (userName) userName.textContent = user.name || 'Гость';
-    if (userRole) userRole.textContent = user.role || 'Покупатель';
-    if (userAvatar) {
-        userAvatar.textContent = (user.name || 'Г').charAt(0).toUpperCase();
-        userAvatar.style.background = `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`;
-    }
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
     
-    // Показываем кнопку профиля, если пользователь зарегистрирован
-    if (profileBtn) {
-        profileBtn.style.display = user.name && user.name !== 'Гость' ? 'flex' : 'none';
-    }
+    document.body.appendChild(notification);
+    
+    // Автоудаление через 5 секунд
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 // Добавляем функции в глобальную область видимости
@@ -293,16 +307,3 @@ window.showUserProfile = showUserProfile;
 window.editProfile = editProfile;
 window.saveProfileChanges = saveProfileChanges;
 window.logoutGuest = logoutGuest;
-
-// Обновляем информацию о пользователе при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        if (currentUser.id && currentUser.role === 'guest') {
-            updateUserInfo({
-                name: currentUser.name,
-                role: 'Покупатель'
-            });
-        }
-    }, 1000);
-});
