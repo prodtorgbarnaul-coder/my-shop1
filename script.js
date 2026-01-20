@@ -170,29 +170,60 @@ function checkout() {
     // Вычисляем общую сумму
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Создаем заказ
-    const orderResult = createOrder(cart, guest, totalAmount);
+    // Получаем заказы
+    const savedOrders = localStorage.getItem('shopOrders');
+    const ordersDatabase = savedOrders ? JSON.parse(savedOrders) : [];
     
-    if (orderResult.success) {
-        // Очищаем корзину
-        cart = [];
-        saveCart();
-        updateCartModal();
-        updateCartCount();
-        
-        // Закрываем модальное окно корзины
-        closeModal('cartModal');
-        
-        // Показываем успешное сообщение
-        showNotification(`✅ Заказ №${orderResult.order.id} создан успешно!`, 'success');
-        
-        // Показываем детали заказа
-        setTimeout(() => {
-            showOrderConfirmation(orderResult.order);
-        }, 1000);
-    } else {
-        showNotification('❌ Ошибка при создании заказа: ' + orderResult.message, 'error');
-    }
+    // Создаем заказ
+    const order = {
+        id: 'ORD' + Date.now().toString().slice(-8),
+        guestId: guest.id,
+        guestName: guest.name,
+        guestPhone: guest.phone,
+        items: cart.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            total: item.price * item.quantity
+        })),
+        totalAmount: totalAmount,
+        status: 'new',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        paymentMethod: 'cash',
+        deliveryAddress: '',
+        notes: ''
+    };
+    
+    // Добавляем заказ в базу
+    ordersDatabase.push(order);
+    
+    // Обновляем статистику гостя
+    guest.ordersCount = (guest.ordersCount || 0) + 1;
+    guest.totalSpent = (guest.totalSpent || 0) + totalAmount;
+    guest.lastOrder = new Date().toISOString();
+    
+    // Сохраняем данные
+    localStorage.setItem('shopOrders', JSON.stringify(ordersDatabase));
+    localStorage.setItem('shopGuests', JSON.stringify(guests));
+    
+    // Очищаем корзину
+    cart = [];
+    saveCart();
+    updateCartModal();
+    updateCartCount();
+    
+    // Закрываем модальное окно корзины
+    closeModal('cartModal');
+    
+    // Показываем успешное сообщение
+    showNotification(`✅ Заказ №${order.id} создан успешно!`, 'success');
+    
+    // Показываем детали заказа
+    setTimeout(() => {
+        showOrderConfirmation(order);
+    }, 1000);
 }
 
 // Показать подтверждение заказа
@@ -270,6 +301,8 @@ function showOrderConfirmation(order) {
 
 // Печать заказа
 function printOrder(orderId) {
+    const savedOrders = localStorage.getItem('shopOrders');
+    const ordersDatabase = savedOrders ? JSON.parse(savedOrders) : [];
     const order = ordersDatabase.find(o => o.id === orderId);
     if (!order) return;
     
@@ -366,3 +399,5 @@ window.checkAndRegisterGuest = checkAndRegisterGuest;
 window.registerGuestSubmit = registerGuestSubmit;
 window.showOrderConfirmation = showOrderConfirmation;
 window.printOrder = printOrder;
+window.checkout = checkout;
+window.updateUserInfo = updateUserInfo;
