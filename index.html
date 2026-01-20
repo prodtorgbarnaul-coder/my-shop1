@@ -59,23 +59,120 @@
         <span class="cart-count">0</span>
     </a>
     
-    <!-- Добавьте эту кнопку -->
-    <a href="#" class="header-action" onclick="showUserProfile(); return false;" id="profileBtn" style="display: none;">
-        <i class="fas fa-user"></i>
-        <span>Профиль</span>
-    </a>
-    
-    <a href="#contact" class="header-action">
-        <i class="fas fa-phone"></i>
-        <span>Контакты</span>
-    </a>
-    
-    <div class="user-info" id="userInfo">
-        <div class="user-avatar" id="userAvatar">Г</div>
-        <div class="user-details">
-            <div class="user-name" id="userName">Гость</div>
-            <div class="user-role" id="userRole">Покупатель</div>
-        </div>
-    </div>
-</div>
-<script src="guest-profile.js"></script>
+/* ========== СТИЛИ ДЛЯ ФОРМ РЕГИСТРАЦИИ ГОСТЕЙ ========== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+}
+
+/* ========== БАДЖИ СТАТУСОВ ========== */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: white;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #28a745, #218838);
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+/* ========== КНОПКА ПРОФИЛЯ ========== */
+#profileBtn {
+    display: none !important; /* Скрыта по умолчанию */
+}
+
+#profileBtn.show {
+    display: flex !important;
+}
+
+/* ========== УВЕДОМЛЕНИЯ ========== */
+.notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.notification-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.notification-error {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.notification-info {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
