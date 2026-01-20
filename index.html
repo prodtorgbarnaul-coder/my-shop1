@@ -1,181 +1,184 @@
-<!-- Заказы -->
-<div id="orders-section" class="admin-section" style="display: none;">
-    <div class="admin-card">
-        <div class="card-header">
-            <h2 class="card-title">Управление заказами</h2>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="orderSearch" class="form-control" placeholder="Поиск по номеру или клиенту..." style="width: 250px;" oninput="searchOrders()">
-                <button class="btn btn-primary" onclick="exportOrders()">
-                    <i class="fas fa-file-export"></i> Экспорт
-                </button>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛍️ ДЛЯ СВОИХ - Интернет-магазин</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+</head>
+<body>
+    <!-- ШАПКА -->
+    <header class="header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🛍️</div>
+                <div>
+                    <div class="logo-text">ДЛЯ СВОИХ</div>
+                    <div class="logo-subtitle">Интернет-магазин</div>
+                </div>
+            </a>
+            
+            <!-- ПОИСК -->
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Поиск товаров..." id="searchInput">
+            </div>
+            
+            <!-- ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ -->
+            <div class="header-actions">
+                <a href="#" class="header-action" id="profileBtn" onclick="showUserProfile(); return false;">
+                    <i class="fas fa-user"></i>
+                    <span>Профиль</span>
+                </a>
+                <a href="#" class="header-action" onclick="showCart(); return false;">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Корзина</span>
+                    <span class="cart-count" id="cartCount">0</span>
+                </a>
+                <a href="login-admin.html" class="header-action">
+                    <i class="fas fa-cog"></i>
+                    <span>Админка</span>
+                </a>
             </div>
         </div>
         
-        <!-- Статистика заказов -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Всего заказов</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="totalOrdersStat">0</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Новые заказы</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="newOrdersStat">0</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Выручка</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="revenueStat">0 ₽</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Средний заказ</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="avgOrderStat">0 ₽</div>
+        <!-- НАВИГАЦИЯ -->
+        <div class="nav-container">
+            <div class="container nav">
+                <a href="#" class="nav-item active" onclick="showCategory('all')">Все товары</a>
+                <a href="#" class="nav-item" onclick="showCategory('бытовая')">Бытовая химия</a>
+                <a href="#" class="nav-item" onclick="showCategory('постельное')">Постельное белье</a>
+                <a href="#" class="nav-item" onclick="showCategory('продукты')">Продукты питания</a>
+                <a href="#" class="nav-item" onclick="showCategory('электроника')">Электроника</a>
+                <a href="#" class="nav-item" onclick="showCategory('одежда')">Одежда</a>
+                <a href="#" class="nav-item" onclick="showCategory('акции')">
+                    <i class="fas fa-fire"></i> Акции
+                </a>
             </div>
         </div>
-        
-        <div class="admin-table-container">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th width="100">Номер</th>
-                        <th>Клиент</th>
-                        <th>Товары</th>
-                        <th width="120">Сумма</th>
-                        <th width="120">Статус</th>
-                        <th width="150">Дата</th>
-                        <th width="200">Действия</th>
-                    </tr>
-                </thead>
-                <tbody id="ordersList">
-                    <!-- Заполняется скриптом -->
-                </tbody>
-            </table>
+    </header>
+
+    <!-- КАТЕГОРИИ -->
+    <section class="categories">
+        <div class="container">
+            <h2 class="section-title">Категории товаров</h2>
+            <div class="categories-grid" id="categoriesGrid">
+                <!-- Категории загружаются скриптом -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ТОВАРЫ -->
+    <section class="products">
+        <div class="container">
+            <h2 class="section-title">Популярные товары</h2>
+            <div class="products-grid" id="productsGrid">
+                <!-- Товары загружаются скриптом -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ПОДВАЛ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h3 class="footer-title">ДЛЯ СВОИХ</h3>
+                    <p>Лучший интернет-магазин с качественными товарами по выгодным ценам.</p>
+                </div>
+                
+                <div>
+                    <h3 class="footer-title">Контакты</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-phone"></i> +7 (3852) 123-456</li>
+                        <li><i class="fas fa-envelope"></i> info@dlya-svoih.ru</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Барнаул, пр. Ленина, 123</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="footer-title">Информация</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">О нас</a></li>
+                        <li><a href="#">Доставка и оплата</a></li>
+                        <li><a href="#">Возврат товара</a></li>
+                        <li><a href="#">Конфиденциальность</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                © 2024 ДЛЯ СВОИХ - Интернет-магазин. Все права защищены.
+            </div>
+        </div>
+    </footer>
+
+    <!-- КОРЗИНА -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Корзина</h3>
+            <button class="btn-icon" onclick="closeCart()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-body" id="cartItems">
+            <!-- Товары в корзине -->
+        </div>
+        <div class="cart-total">
+            <span>Итого:</span>
+            <span id="cartTotal">0 ₽</span>
+        </div>
+        <div style="padding: 20px;">
+            <button class="btn btn-primary" style="width: 100%;" onclick="checkout()">
+                <i class="fas fa-check"></i> Оформить заказ
+            </button>
         </div>
     </div>
-<script src="script.js"></script>
-<script src="guest-profile.js"></script>
-</div>
-<!-- Действия пользователя -->
-<div class="header-actions">
-    <a href="#" class="header-action" onclick="showCart(); return false;">
-        <i class="fas fa-shopping-cart"></i>
-        <span>Корзина</span>
-        <span class="cart-count">0</span>
-    </a>
-    
-/* ========== СТИЛИ ДЛЯ ФОРМ РЕГИСТРАЦИИ ГОСТЕЙ ========== */
-.form-group {
-    margin-bottom: 20px;
-}
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--dark);
-    font-size: 14px;
-}
+    <!-- ФОРМА РЕГИСТРАЦИИ ГОСТЯ -->
+    <div class="modal" id="guestModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Регистрация покупателя</h3>
+                <span class="close" onclick="closeModal('guestModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Пожалуйста, введите свои данные для оформления заказа</p>
+                
+                <div class="form-group">
+                    <label>Ваше имя *</label>
+                    <input type="text" class="form-control" id="guestName" placeholder="Иван Иванов" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ваш телефон *</label>
+                    <input type="tel" class="form-control" id="guestPhone" placeholder="+7 (999) 123-45-67" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Пароль (необязательно)</label>
+                    <input type="password" class="form-control" id="guestPassword" placeholder="Оставьте пустым для автоматической генерации">
+                    <small style="color: var(--gray);">Пароль нужен для входа в будущем</small>
+                </div>
+                
+                <div id="registerError" style="color: var(--danger); margin: 10px 0; display: none;"></div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('guestModal')">
+                        <i class="fas fa-clock"></i> Позже
+                    </button>
+                    <button class="btn btn-primary" onclick="registerGuest()">
+                        <i class="fas fa-check"></i> Зарегистрироваться
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-.form-control {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
-}
-
-/* ========== БАДЖИ СТАТУСОВ ========== */
-.badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: white;
-}
-
-.bg-warning {
-    background: linear-gradient(135deg, #ffc107, #ff9800);
-}
-
-.bg-info {
-    background: linear-gradient(135deg, #17a2b8, #138496);
-}
-
-.bg-success {
-    background: linear-gradient(135deg, #28a745, #218838);
-}
-
-.bg-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333);
-}
-
-.bg-secondary {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
-}
-
-/* ========== КНОПКА ПРОФИЛЯ ========== */
-#profileBtn {
-    display: none !important; /* Скрыта по умолчанию */
-}
-
-#profileBtn.show {
-    display: flex !important;
-}
-
-/* ========== УВЕДОМЛЕНИЯ ========== */
-.notification {
-    position: fixed;
-    top: 100px;
-    right: 20px;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 10000;
-    animation: slideIn 0.3s ease;
-    max-width: 400px;
-}
-
-.notification-success {
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
-    color: #155724;
-    border-left: 4px solid #28a745;
-}
-
-.notification-error {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-    color: #721c24;
-    border-left: 4px solid #dc3545;
-}
-
-.notification-info {
-    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
-    color: #0c5460;
-    border-left: 4px solid #17a2b8;
-}
-
-.notification-warning {
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-    color: #856404;
-    border-left: 4px solid #ffc107;
-}
-
-@keyframes slideIn {
-    from { 
-        transform: translateX(100%); 
-        opacity: 0; 
-    }
-    to { 
-        transform: translateX(0); 
-        opacity: 1; 
-    }
-}
-
-
+    <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
+    <script src="script.js"></script>
+    <script src="guest-profile.js"></script>
+</body>
+</html>
