@@ -1,6 +1,3 @@
-
-📄 6. ПОЛНЫЙ ФАЙЛ admin.html:
-
 ```html
 <!DOCTYPE html>
 <html lang="ru">
@@ -271,19 +268,88 @@
                 </div>
             </div>
 
-            <!-- Заказы -->
-            <div id="orders-section" class="admin-section" style="display: none;">
-                <div class="admin-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Заказы</h2>
-                    </div>
-                    <div style="text-align: center; padding: 60px 20px; color: var(--gray);">
-                        <i class="fas fa-shopping-cart" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
-                        <h3 style="margin-bottom: 10px;">Раздел в разработке</h3>
-                        <p>Функционал управления заказами будет доступен в следующем обновлении</p>
-                    </div>
-                </div>
+           <!-- Заказы -->
+<div id="orders-section" class="admin-section" style="display: none;">
+    <div class="admin-card">
+        <div class="card-header">
+            <h2 class="card-title">Управление заказами</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="orderSearch" class="form-control" placeholder="Поиск по номеру или клиенту..." style="width: 250px;" oninput="searchOrders()">
+                <button class="btn btn-primary" onclick="exportOrders()">
+                    <i class="fas fa-file-export"></i> Экспорт
+                </button>
             </div>
+        </div>
+        
+        <!-- Статистика заказов -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px;">
+                <div style="font-size: 12px; opacity: 0.9;">Всего заказов</div>
+                <div style="font-size: 2rem; font-weight: bold;" id="totalOrdersStat">0</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 15px; border-radius: 10px;">
+                <div style="font-size: 12px; opacity: 0.9;">Новые заказы</div>
+                <div style="font-size: 2rem; font-weight: bold;" id="newOrdersStat">0</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 10px;">
+                <div style="font-size: 12px; opacity: 0.9;">Выручка</div>
+                <div style="font-size: 2rem; font-weight: bold;" id="revenueStat">0 ₽</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; padding: 15px; border-radius: 10px;">
+                <div style="font-size: 12px; opacity: 0.9;">Средний заказ</div>
+                <div style="font-size: 2rem; font-weight: bold;" id="avgOrderStat">0 ₽</div>
+            </div>
+        </div>
+        
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th width="100">Номер</th>
+                        <th>Клиент</th>
+                        <th>Товары</th>
+                        <th width="120">Сумма</th>
+                        <th width="120">Статус</th>
+                        <th width="150">Дата</th>
+                        <th width="200">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersList">
+                    <!-- Заполняется скриптом -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Гости -->
+<div id="guests-section" class="admin-section" style="display: none;">
+    <div class="admin-card">
+        <div class="card-header">
+            <h2 class="card-title">Клиенты (Гости)</h2>
+            <input type="text" id="guestSearch" class="form-control" placeholder="Поиск по имени или телефону..." style="width: 250px;" oninput="searchGuests()">
+        </div>
+        
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th width="50">ID</th>
+                        <th>Имя</th>
+                        <th width="150">Телефон</th>
+                        <th width="120">Заказы</th>
+                        <th width="120">Потрачено</th>
+                        <th width="150">Последний заказ</th>
+                        <th width="100">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="guestsList">
+                    <!-- Заполняется скриптом -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
             <!-- Дизайн -->
             <div id="design-section" class="admin-section" style="display: none;">
