@@ -1500,3 +1500,222 @@ footer {
 .bg-dark { background: var(--dark); color: white; }
 .rounded { border-radius: var(--radius); }
 .shadow { box-shadow: var(--shadow); }
+/* ========== СТИЛИ ДЛЯ ФОРМ РЕГИСТРАЦИИ ========== */
+.registration-form {
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.registration-form h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--dark);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+/* ========== СТИЛИ ДЛЯ ПРОФИЛЯ ========== */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.profile-stat {
+    background: linear-gradient(135deg, var(--primary), #1a3a6b);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.profile-stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.profile-stat-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.order-history {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.3s ease;
+}
+
+.order-item:hover {
+    background-color: #f8f9fa;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-info {
+    flex: 1;
+}
+
+.order-number {
+    font-weight: bold;
+    color: var(--dark);
+}
+
+.order-date {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.order-status {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-new { background: #fff3cd; color: #856404; }
+.status-processing { background: #d1ecf1; color: #0c5460; }
+.status-completed { background: #d4edda; color: #155724; }
+.status-cancelled { background: #f8d7da; color: #721c24; }
+
+/* ========== БАДЖИ СТАТУСОВ ЗАКАЗОВ ========== */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: white;
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #28a745, #218838);
+    color: white;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+}
+
+/* ========== СТИЛИ ДЛЯ ТАБЛИЦ АДМИНКИ ========== */
+.status-select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.status-select:hover {
+    border-color: var(--primary);
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+}
+
+/* ========== АДАПТИВНОСТЬ ФОРМ ========== */
+@media (max-width: 768px) {
+    .registration-form {
+        padding: 20px;
+        margin: 0 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+    
+    .profile-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-actions {
+        align-self: flex-end;
+    }
+}
