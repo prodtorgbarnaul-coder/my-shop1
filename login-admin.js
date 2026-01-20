@@ -2,38 +2,30 @@
 // СИСТЕМА АВТОРИЗАЦИИ ДЛЯ АДМИН-ПАНЕЛИ
 // ============================================
 
-// База данных пользователей (админы и гости)
-let usersDatabase = {
-    admins: [
-        { id: 1, login: 'admin', password: 'admin123', name: 'Администратор', role: 'admin', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' },
-        { id: 2, login: 'prodtorg', password: 'prodtorg2024', name: 'PRODTORG Manager', role: 'manager', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' },
-        { id: 3, login: 'manager', password: 'manager123', name: 'Менеджер', role: 'manager', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' }
-    ],
-    guests: [] // Гости будут добавляться при регистрации
-};
+// База данных пользователей
+const adminUsers = [
+    { id: 1, login: 'admin', password: 'admin123', name: 'Администратор', role: 'admin', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' },
+    { id: 2, login: 'prodtorg', password: 'prodtorg2024', name: 'PRODTORG Manager', role: 'manager', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' },
+    { id: 3, login: 'manager', password: 'manager123', name: 'Менеджер', role: 'manager', phone: '+7 (923) 753-36-06', email: 'prodtorg.barnaul@gmail.com' }
+];
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔐 Инициализация системы авторизации...');
     
-    // Загружаем сохраненные данные
-    loadSavedData();
+    // Проверяем, уже авторизован ли пользователь
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (currentUser.id && (currentUser.role === 'admin' || currentUser.role === 'manager')) {
+        // Перенаправляем в админ-панель
+        window.location.href = 'admin.html';
+        return;
+    }
     
     // Настраиваем обработчики
     setupLoginForm();
     
     console.log('✅ Система авторизации готова');
 });
-
-// Загрузка сохраненных данных
-function loadSavedData() {
-    // Загружаем гостей
-    const savedGuests = localStorage.getItem('shopGuests');
-    if (savedGuests) {
-        usersDatabase.guests = JSON.parse(savedGuests);
-        console.log(`👥 Загружено ${usersDatabase.guests.length} гостей`);
-    }
-}
 
 // Настройка формы входа
 function setupLoginForm() {
@@ -51,6 +43,13 @@ function setupLoginForm() {
             performLogin();
         }
     });
+    
+    // Автозаполнение логина, если запомнен
+    const rememberedLogin = localStorage.getItem('rememberedLogin');
+    if (rememberedLogin && document.getElementById('login')) {
+        document.getElementById('login').value = rememberedLogin;
+        document.getElementById('remember').checked = true;
+    }
 }
 
 // Выполнение входа
@@ -66,25 +65,15 @@ function performLogin() {
     }
     
     // Поиск пользователя
-    const admin = usersDatabase.admins.find(u => 
+    const user = adminUsers.find(u => 
         u.login.toLowerCase() === login.toLowerCase() && u.password === password
     );
     
-    if (admin) {
-        // Успешный вход админа
-        loginSuccess(admin, remember);
+    if (user) {
+        // Успешный вход
+        loginSuccess(user, remember);
     } else {
-        // Проверка гостя
-        const guest = usersDatabase.guests.find(g => 
-            g.phone === login && g.password === password
-        );
-        
-        if (guest) {
-            // Успешный вход гостя
-            loginSuccess(guest, remember);
-        } else {
-            showLoginError('❌ Неверный логин или пароль');
-        }
+        showLoginError('❌ Неверный логин или пароль');
     }
 }
 
@@ -93,7 +82,6 @@ function loginSuccess(user, remember = false) {
     console.log(`✅ Успешный вход: ${user.name} (${user.role})`);
     
     // Сохраняем сессию
-    localStorage.setItem('isAdmin', 'true');
     localStorage.setItem('currentUser', JSON.stringify({
         id: user.id,
         name: user.name,
@@ -115,11 +103,7 @@ function loginSuccess(user, remember = false) {
     
     // Перенаправляем
     setTimeout(() => {
-        if (user.role === 'admin' || user.role === 'manager') {
-            window.location.href = 'admin.html';
-        } else {
-            window.location.href = 'index.html';
-        }
+        window.location.href = 'admin.html';
     }, 1500);
 }
 
@@ -170,87 +154,14 @@ function resetPassword() {
     if (!login) return;
     
     // Поиск пользователя
-    const admin = usersDatabase.admins.find(u => u.login === login);
-    if (admin) {
-        alert(`Пароль для ${admin.login}: ${admin.password}\n\nРекомендуем изменить пароль в настройках после входа.`);
+    const user = adminUsers.find(u => u.login === login);
+    if (user) {
+        alert(`Пароль для ${user.login}: ${user.password}\n\nРекомендуем изменить пароль в настройках после входа.`);
     } else {
         alert('Пользователь не найден');
     }
 }
 
-// Регистрация нового гостя
-function registerGuest(name, phone, password = '') {
-    if (!name || !phone) {
-        return { success: false, message: 'Заполните имя и телефон' };
-    }
-    
-    // Проверяем, существует ли уже гость с таким телефоном
-    const existingGuest = usersDatabase.guests.find(g => g.phone === phone);
-    
-    if (existingGuest) {
-        // Обновляем данные существующего гостя
-        existingGuest.name = name;
-        existingGuest.lastLogin = new Date().toISOString();
-        existingGuest.loginCount = (existingGuest.loginCount || 0) + 1;
-        
-        if (password) {
-            existingGuest.password = password;
-        }
-        
-        // Сохраняем
-        saveGuestsData();
-        
-        return { 
-            success: true, 
-            message: 'Данные обновлены', 
-            guest: existingGuest 
-        };
-    } else {
-        // Создаем нового гостя
-        const newGuest = {
-            id: Date.now(),
-            name: name.trim(),
-            phone: phone.trim(),
-            password: password || generateGuestPassword(),
-            role: 'guest',
-            registered: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            loginCount: 1,
-            ordersCount: 0,
-            totalSpent: 0
-        };
-        
-        usersDatabase.guests.push(newGuest);
-        saveGuestsData();
-        
-        return { 
-            success: true, 
-            message: 'Регистрация успешна', 
-            guest: newGuest 
-        };
-    }
-}
-
-// Генерация пароля для гостя
-function generateGuestPassword() {
-    return 'guest' + Math.floor(1000 + Math.random() * 9000);
-}
-
-// Сохранение данных гостей
-function saveGuestsData() {
-    localStorage.setItem('shopGuests', JSON.stringify(usersDatabase.guests));
-}
-
 // Делаем функции доступными глобально
 window.performLogin = performLogin;
 window.resetPassword = resetPassword;
-window.registerGuest = registerGuest;
-
-// Автозаполнение логина, если запомнен
-window.onload = function() {
-    const rememberedLogin = localStorage.getItem('rememberedLogin');
-    if (rememberedLogin && document.getElementById('login')) {
-        document.getElementById('login').value = rememberedLogin;
-        document.getElementById('remember').checked = true;
-    }
-};
