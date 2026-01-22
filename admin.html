@@ -1,323 +1,41 @@
-```html
+<!-- admin.html -->
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель - ДЛЯ СВОИХ</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin-style.css">
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+    <title>Административная панель</title>
 </head>
 <body>
-    <!-- Конструктор (только для админа) -->
-    <div class="constructor-toolbar" id="adminConstructor" style="display: none;">
-        <div class="constructor-toggle" onclick="toggleConstructor()">
-            <i class="fas fa-cog"></i>
-        </div>
-        <div id="editButtons">
-            <button class="edit-btn" onclick="showSection('dashboard')">
-                <i class="fas fa-tachometer-alt"></i> Дашборд
-            </button>
-            <button class="edit-btn" onclick="showSection('products')">
-                <i class="fas fa-box"></i> Товары
-            </button>
-            <button class="edit-btn" onclick="logoutAdmin()">
-                <i class="fas fa-sign-out-alt"></i> Выйти
-            </button>
-        </div>
-    </div>
+    <header>
+        <h1>Администрация интернет-магазина</h1>
+    </header>
 
-    <div class="admin-container">
-        <!-- Боковая панель -->
-        <div class="admin-sidebar">
-            <div class="admin-logo">
-                <h1>🛒 ДЛЯ СВОИХ</h1>
-                <small>Админ-панель</small>
-            </div>
-            
-            <div class="admin-nav">
-                <div class="admin-nav-label">Основное</div>
-                <a href="#" onclick="showSection('dashboard')" class="active">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Дашборд</span>
-                </a>
-                <a href="#" onclick="showSection('products')">
-                    <i class="fas fa-box"></i>
-                    <span>Товары</span>
-                </a>
-                <a href="#" onclick="showSection('categories')">
-                    <i class="fas fa-tags"></i>
-                    <span>Категории</span>
-                </a>
-                <a href="#" onclick="showSection('orders')">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Заказы</span>
-                </a>
-                
-                <div class="admin-nav-label">Настройки</div>
-                <a href="#" onclick="showSection('design')">
-                    <i class="fas fa-palette"></i>
-                    <span>Дизайн</span>
-                </a>
-                <a href="#" onclick="showSection('settings')">
-                    <i class="fas fa-cog"></i>
-                    <span>Настройки</span>
-                </a>
-                <a href="#" onclick="showSection('users')">
-                    <i class="fas fa-users"></i>
-                    <span>Пользователи</span>
-                </a>
-                
-                <div class="admin-nav-label">Инструменты</div>
-                <a href="#" onclick="exportData()">
-                    <i class="fas fa-download"></i>
-                    <span>Экспорт данных</span>
-                </a>
-                <a href="#" onclick="showModal('importModal')">
-                    <i class="fas fa-file-import"></i>
-                    <span>Импорт CSV</span>
-                </a>
-                <a href="#" onclick="resetData()">
-                    <i class="fas fa-trash"></i>
-                    <span>Очистить всё</span>
-                </a>
-                
-                <div class="admin-nav-label">Сайт</div>
-                <a href="index.html" target="_blank">
-                    <i class="fas fa-store"></i>
-                    <span>Магазин</span>
-                </a>
-                <a href="login-admin.html" onclick="logoutAdmin()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выход</span>
-                </a>
-            </div>
-            
-            <div style="padding: 20px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 11px; color: #95a5a6; text-align: center;">
-                    <div>PRODTORG BARNAUL</div>
-                    <div style="margin-top: 5px;">© 2024 ДЛЯ СВОИХ</div>
-                </div>
-            </div>
-        </div>
+    <!-- Таблица гостей -->
+    <section id="guests-list">
+        <table class="guest-table">
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Телефон</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="guestsTable"></tbody>
+        </table>
+    </section>
 
-        <!-- Основной контент -->
-        <div class="admin-content">
-            <!-- Шапка -->
-            <div class="admin-header">
-                <h1 class="admin-title" id="pageTitle">Дашборд</h1>
-                <div class="admin-user">
-                    <div class="user-avatar" id="adminAvatar">A</div>
-                    <div class="user-details">
-                        <div class="user-name" id="adminName">Администратор</div>
-                        <div class="user-role">Админ</div>
-                    </div>
-                    <button class="logout-btn" onclick="logoutAdmin()" title="Выйти">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                </div>
-            </div>
+    <!-- История заказов -->
+    <section id="orders-history">
+        <h2>История заказов</h2>
+        <div id="ordersHistory"></div>
+    </section>
 
-            <!-- Дашборд -->
-            <div id="dashboard-section" class="admin-section">
-                <!-- Статистика -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon icon-products">
-                            <i class="fas fa-box"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="productsCount">0</h3>
-                            <p>Товаров</p>
-                            <span class="stat-change positive">+12%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon icon-categories">
-                            <i class="fas fa-tags"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="categoriesCount">0</h3>
-                            <p>Категорий</p>
-                            <span class="stat-change positive">+2</span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon icon-orders">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="ordersCount">0</h3>
-                            <p>Заказов</p>
-                            <span class="stat-change negative">-5%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon icon-revenue">
-                            <i class="fas fa-ruble-sign"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="revenueAmount">0 ₽</h3>
-                            <p>Выручка</p>
-                            <span class="stat-change positive">+8%</span>
-                        </div>
-                    </div>
-                </div>
+    <footer>
+        © 2024 My Shop
+    </footer>
 
-                <!-- Быстрые действия -->
-                <div class="admin-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Быстрые действия</h2>
-                    </div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="showModal('addProductModal')">
-                            <i class="fas fa-plus"></i> Добавить товар
-                        </button>
-                        <button class="btn btn-success" onclick="showModal('addCategoryModal')">
-                            <i class="fas fa-tag"></i> Добавить категорию
-                        </button>
-                        <button class="btn btn-secondary" onclick="showModal('importModal')">
-                            <i class="fas fa-file-import"></i> Импорт CSV
-                        </button>
-                        <button class="btn btn-info" onclick="window.open('index.html', '_blank')">
-                            <i class="fas fa-eye"></i> Просмотр магазина
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Последние товары -->
-                <div class="admin-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Последние товары</h2>
-                        <a href="#" onclick="showSection('products')" style="font-size: 14px; color: var(--primary); text-decoration: none;">
-                            <i class="fas fa-arrow-right"></i> Все товары
-                        </a>
-                    </div>
-                    <div class="admin-table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Категория</th>
-                                    <th>Цена</th>
-                                    <th>Остаток</th>
-                                    <th>Статус</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recentProducts">
-                                <!-- Заполняется скриптом -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Товары -->
-            <div id="products-section" class="admin-section" style="display: none;">
-                <div class="admin-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Управление товарами</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="productSearch" class="form-control" placeholder="Поиск товаров..." style="width: 250px;">
-                            <button class="btn btn-primary" onclick="showModal('addProductModal')">
-                                <i class="fas fa-plus"></i> Добавить
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th width="50">ID</th>
-                                    <th>Название</th>
-                                    <th width="150">Категория</th>
-                                    <th width="120">Цена</th>
-                                    <th width="100">Остаток</th>
-                                    <th width="120">Статус</th>
-                                    <th width="120">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsList">
-                                <!-- Заполняется скриптом -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Категории -->
-            <div id="categories-section" class="admin-section" style="display: none;">
-                <div class="admin-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Категории товаров</h2>
-                        <button class="btn btn-primary" onclick="showModal('addCategoryModal')">
-                            <i class="fas fa-plus"></i> Добавить категорию
-                        </button>
-                    </div>
-                    
-                    <div class="categories-preview" id="categoriesList">
-                        <!-- Заполняется скриптом -->
-                    </div>
-                </div>
-            </div>
-
-          <!-- Заказы -->
-<div id="orders-section" class="admin-section" style="display: none;">
-    <div class="admin-card">
-        <div class="card-header">
-            <h2 class="card-title">Управление заказами</h2>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="orderSearch" class="form-control" placeholder="Поиск по номеру или клиенту..." style="width: 250px;" oninput="searchOrders()">
-                <button class="btn btn-primary" onclick="exportOrders()">
-                    <i class="fas fa-file-export"></i> Экспорт
-                </button>
-            </div>
-        </div>
-        
-        <!-- Статистика заказов -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Всего заказов</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="totalOrdersStat">0</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Новые заказы</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="newOrdersStat">0</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Выручка</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="revenueStat">0 ₽</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; opacity: 0.9;">Средний заказ</div>
-                <div style="font-size: 2rem; font-weight: bold;" id="avgOrderStat">0 ₽</div>
-            </div>
-        </div>
-        
-        <div class="admin-table-container">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th width="100">Номер</th>
-                        <th>Клиент</th>
-                        <th>Товары</th>
-                        <th width="120">Сумма</th>
-                        <th width="120">Статус</th>
-                        <th width="150">Дата</th>
-                        <th width="200">Действия</th>
-                    </tr>
-                </thead>
-                <tbody id="ordersList">
-                    <!-- Заполняется скриптом -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <script src="admin-script.js"></script>
+</body>
+</html>
